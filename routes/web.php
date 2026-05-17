@@ -21,9 +21,9 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// Route::get('/dashboard', function () {
-//     return view('dashboard');
-// })->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -33,14 +33,14 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
 
-    Route::get('/admin/dashboard', [AdminController::class . 'index'])->name('admin.dashboard');
+    Route::get('/admin/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
     Route::resource('/admin/crud', crudController::class);
 
 });
 
 Route::middleware(['auth', 'role:user'])->group(function () {
 
-    Route::get('/user/dashboard', UserController::class . '@index');
+    Route::get('/user/dashboard', [UserController::class, 'index'])->name('user.dashboard');
 
 });
 
