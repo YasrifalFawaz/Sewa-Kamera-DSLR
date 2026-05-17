@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\crudController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\User\UserController;
 use App\Http\Controllers\Admin\KameraController;
+use App\Http\Controllers\User\SewaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,6 +44,15 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 Route::middleware(['auth', 'role:user'])->group(function () {
 
     Route::get('/user/dashboard', [UserController::class, 'index'])->name('user.dashboard');
+
+    // simpan transaksi
+    Route::post(
+        '/user/sewa',
+        [SewaController::class, 'store']
+    )->name('sewa.store');
+
+    Route::get('/sewa/{id}/kontrak', [SewaController::class, 'generateKontrak'])
+    ->name('sewa.kontrak');
 
 });
 

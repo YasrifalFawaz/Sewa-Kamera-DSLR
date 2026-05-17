@@ -6,6 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class Kamera extends Model
 {
+
+    public function transaksis()
+    {
+        return $this->hasMany(Transaksi::class);
+    }
+    
     protected $fillable = [
 
         'nama_kamera',
