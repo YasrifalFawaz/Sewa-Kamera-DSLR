@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\Kamera;
 use App\Models\User;
 
 class AdminController extends Controller
@@ -11,7 +12,8 @@ class AdminController extends Controller
     public function index()
     {
         $users = User::latest()->get();
+        $kameras = Kamera::latest()->get();
 
-        return view('admin.dashboard', compact('users'));
+        return view('admin.dashboard', compact('users', 'kameras'));
     }
 }

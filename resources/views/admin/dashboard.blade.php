@@ -244,9 +244,6 @@
                 <h1 id="dashboard-title">Pengelolaan Kamera</h1>
                 <p id="dashboard-subtitle">Atur ketersediaan dan aset kamera studio Anda.</p>
             </div>
-            <div>
-                <a href="{{ url('/') }}" target="_blank" class="btn btn-outline">Lihat Situs</a>
-            </div>
         </header>
 
         <!-- STATS WIDGETS BAR -->
@@ -266,47 +263,122 @@
         </div>
 
         <!-- SECTION: CRUD KAMERA -->
+        <!-- SECTION: CRUD KAMERA -->
         <section id="section-kamera" class="section-card">
+
             <div class="table-header">
-                <h2 class="table-title">Daftar Inventaris Kamera</h2>
-                <button class="btn btn-gold">+ Tambah Kamera</button>
+                <h2 class="table-title">
+                    Daftar Inventaris Kamera
+                </h2>
+                <!-- Tombol Tambah Kamera -->
+                <a
+                    href="{{ route('kamera.create') }}"
+                    class="btn btn-gold"
+                >
+                    + Tambah Kamera
+                </a>
             </div>
-            
+            <!-- Alert Success -->
+            @if(session('success'))
+                <div
+                    style="
+                        background: #14532d;
+                        color: white;
+                        padding: 10px;
+                        margin-bottom: 15px;
+                        border-radius: 8px;
+                    "
+                >
+                    {{ session('success') }}
+                </div>
+            @endif
             <div class="table-responsive">
                 <table>
                     <thead>
                         <tr>
                             <th>ID</th>
                             <th>Nama Kamera</th>
-                            <th>Kategori</th>
+                            <th>Brand</th>
                             <th>Harga Sewa /Hari</th>
                             <th>Status</th>
                             <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>#CAM-01</td>
-                            <td style="color: var(--white); font-weight: 500;">Sony Alpha a7 IV</td>
-                            <td>Mirrorless</td>
-                            <td>Rp 350.000</td>
-                            <td><span class="badge badge-success">Tersedia</span></td>
-                            <td>
-                                <button class="btn btn-action btn-edit">Edit</button>
-                                <button class="btn btn-action btn-delete">Hapus</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#CAM-02</td>
-                            <td style="color: var(--white); font-weight: 500;">Canon EOS R5</td>
-                            <td>Mirrorless</td>
-                            <td>Rp 500.000</td>
-                            <td><span class="badge badge-warning">Disewa</span></td>
-                            <td>
-                                <button class="btn btn-action btn-edit">Edit</button>
-                                <button class="btn btn-action btn-delete">Hapus</button>
-                            </td>
-                        </tr>
+                        @forelse($kameras as $kamera)
+                            <tr>
+                                <!-- ID -->
+                                <td>
+                                    #CAM-{{ $kamera->id }}
+                                </td>
+                                <!-- Nama Kamera -->
+                                <td
+                                    style="
+                                        color: var(--white);
+                                        font-weight: 500;
+                                    "
+                                >
+                                    {{ $kamera->nama_kamera }}
+                                </td>
+                                <!-- Brand -->
+                                <td>
+                                    {{ $kamera->brand }}
+                                </td>
+                                <!-- Harga -->
+                                <td>
+                                    Rp {{ number_format($kamera->harga, 0, ',', '.') }}
+                                </td>
+                                <!-- Status -->
+                                <td>
+                                    @if($kamera->stock > 0)
+                                        <span class="badge badge-success">
+                                            Tersedia
+                                        </span>
+                                    @else
+                                        <span class="badge badge-warning">
+
+                                            Habis
+                                        </span>
+                                    @endif
+                                </td>
+                                <!-- Aksi -->
+                                <td
+                                    style="
+                                        display: flex;
+                                        gap: 5px;
+                                    "
+                                >
+                                    <!-- Tombol Edit -->
+                                    <a
+                                        href="{{ route('kamera.edit', $kamera->id) }}"
+                                        class="btn btn-action btn-edit"
+                                    >
+                                        Edit
+                                    </a>
+                                    <!-- Tombol Delete -->
+                                    <form
+                                        action="{{ route('kamera.destroy', $kamera->id) }}"
+                                        method="POST"
+                                        onsubmit="return confirm('Yakin ingin menghapus kamera ini?')"
+                                >
+                                        @csrf
+                                        @method('DELETE')
+                                        <button
+                                            type="submit"
+                                            class="btn btn-action btn-delete"
+                                        >
+                                            Hapus
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" style="text-align:center;">
+                                    Data kamera belum tersedia
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
