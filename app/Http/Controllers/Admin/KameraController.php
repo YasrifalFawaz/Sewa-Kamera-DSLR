@@ -44,7 +44,7 @@ class KameraController extends Controller
             'kelengkapan' => $request->kelengkapan,
             'harga' => $request->harga,
             'stock' => $request->stock,
-            'image' => $request->image,
+            'image' => $request->file('image')->store('kamera', 'public'),
         ]);
 
         return redirect()
@@ -80,7 +80,7 @@ class KameraController extends Controller
             'kelengkapan' => $request->kelengkapan,
             'harga' => $request->harga,
             'stock' => $request->stock,
-            'image' => $request->image,
+            'image' => $request->file('image')->store('kamera', 'public'),
         ]);
 
         return redirect()

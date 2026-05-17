@@ -1,3 +1,7 @@
+@php
+    use Illuminate\Support\Str;
+@endphp
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -279,68 +283,63 @@
         <!-- SECTION 1: KATALOG PENYEWAN (GRID CARDS) -->
         <section id="section-penyewaan" class="section-card">
             <div class="camera-grid">
-                
-                <!-- Card Kamera 1 -->
-                <div class="camera-card">
-                    <div class="stock-badge">Tersedia: 3 Unit</div>
-                    <div class="camera-img">
-                        <!-- Jika ada aset foto masukkan disini: <img src="url_foto_kamera" alt="Sony a7IV"> -->
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                            <circle cx="12" cy="13" r="4"/>
-                        </svg>
-                        <span>Sony Alpha a7 IV</span>
-                    </div>
-                    <div class="camera-body">
-                        <h3>Sony Alpha a7 IV</h3>
-                        <p class="camera-specs-preview">Sensor Full-Frame 33MP, Perekaman Video 4K 60p, Stabilisasi Gambar 5-Axis In-Body.</p>
-                        <div class="camera-footer">
-                            <div class="price-tag">Rp 350k <span>/hari</span></div>
-                            <a href="#" class="btn btn-gold">Sewa Sekarang</a>
+                @forelse($kameras as $kamera)
+                    <div class="camera-card">
+                        {{-- Badge Stock --}}
+                        @if($kamera->stock > 0)
+                            <div class="stock-badge">
+                                Tersedia: {{ $kamera->stock }} Unit
+                            </div>
+                        @else
+                            <div class="stock-badge empty">
+                                Habis
+                            </div>
+                        @endif
+
+                        {{-- Gambar Kamera --}}
+                        <div class="camera-img">
+                            <img
+                                src="{{ asset('storage/' . $kamera->image) }}"
+                                alt="{{ $kamera->nama_kamera }}"
+                            >
+                        </div>
+
+                        {{-- Body --}}
+                        <div class="camera-body">
+                            <h3>
+                                {{ $kamera->nama_kamera }}
+                            </h3>
+                            <p class="camera-specs-preview">
+
+                                {{ Str::limit($kamera->spesifikasi, 100) }}
+                            </p>
+                            <div class="camera-footer">
+                                <div class="price-tag">
+                                    Rp {{ number_format($kamera->harga, 0, ',', '.') }}
+                                    <span>/hari</span>
+                                </div>
+                                @if($kamera->stock > 0)
+                                    <a href="#" class="btn btn-gold">
+                                        Sewa Sekarang
+                                    </a>
+                                @else
+                                    <button class="btn btn-disabled" disabled>
+                                        Tidak Tersedia
+                                    </button>
+                                @endif
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Card Kamera 2 -->
-                <div class="camera-card">
-                    <div class="stock-badge">Tersedia: 1 Unit</div>
-                    <div class="camera-img">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                            <circle cx="12" cy="13" r="4"/>
-                        </svg>
-                        <span>Canon EOS R5</span>
+                @empty
+                    <div
+                        style="
+                            color: white;
+                            font-size: 18px;
+                        "
+                    >
+                        Data kamera belum tersedia
                     </div>
-                    <div class="camera-body">
-                        <h3>Canon EOS R5</h3>
-                        <p class="camera-specs-preview">Sensor 45MP, Video 8K RAW internal, Dual Pixel CMOS AF II super cepat.</p>
-                        <div class="camera-footer">
-                            <div class="price-tag">Rp 500k <span>/hari</span></div>
-                            <a href="#" class="btn btn-gold">Sewa Sekarang</a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Card Kamera 3 (Stok Habis) -->
-                <div class="camera-card">
-                    <div class="stock-badge empty">Habis</div>
-                    <div class="camera-img">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                            <circle cx="12" cy="13" r="4"/>
-                        </svg>
-                        <span>Fujifilm X-T4</span>
-                    </div>
-                    <div class="camera-body">
-                        <h3>Fujifilm X-T4</h3>
-                        <p class="camera-specs-preview">Sensor APS-C 26.1MP, X-Processor 4, Simulasi Film Legendaris Fujifilm.</p>
-                        <div class="camera-footer">
-                            <div class="price-tag">Rp 250k <span>/hari</span></div>
-                            <button class="btn btn-disabled" disabled>Tidak Tersedia</button>
-                        </div>
-                    </div>
-                </div>
-
+                @endforelse
             </div>
         </section>
 
