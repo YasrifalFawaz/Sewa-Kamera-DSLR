@@ -7,11 +7,9 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
-class crudController extends Controller
+class CrudController extends Controller
 {
-    /**
-     * Menampilkan semua user
-     */
+    // TAMPILKAN DASHBOARD + DATA USER
     public function index()
     {
         $users = User::latest()->get();
@@ -19,85 +17,74 @@ class crudController extends Controller
         return view('admin.dashboard', compact('users'));
     }
 
-    /**
-     * Form tambah user
-     */
+    // FORM CREATE
     public function create()
     {
         return view('admin.crud.create');
     }
 
-    /**
-     * Simpan user baru
-     */
+    // STORE
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required',
             'email' => 'required|email|unique:users',
-            'alamat' => 'required',
             'no_telp' => 'required',
-            'role' => 'required|in:admin,user',
-            'password' => 'required|min:6',
+            'alamat' => 'required',
+            'password' => 'required|min:8',
         ]);
 
         User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'alamat' => $request->alamat,
             'no_telp' => $request->no_telp,
+            'alamat' => $request->alamat,
             'role' => 'user',
             'password' => Hash::make($request->password),
         ]);
 
         return redirect()
-                ->route('admin.dashboard')
-                ->with('success', 'User berhasil ditambahkan');
+            ->route('crud.index')
+            ->with('success', 'User berhasil ditambahkan');
     }
 
-    /**
-     * Form edit user
-     */
-    public function edit(User $user)
+    // FORM EDIT
+    public function edit(User $crud)
     {
-        return view('admin.crud.edit', compact('user'));
+        return view('admin.crud.edit', [
+            'user' => $crud
+        ]);
     }
 
-    /**
-     * Update user
-     */
-    public function update(Request $request, User $user)
+    // UPDATE
+    public function update(Request $request, User $crud)
     {
         $request->validate([
             'name' => 'required',
             'email' => 'required|email',
-            'alamat' => 'required',
             'no_telp' => 'required',
-            'role' => 'required|in:admin,user',
+            'alamat' => 'required',
         ]);
 
-        $user->update([
+        $crud->update([
             'name' => $request->name,
             'email' => $request->email,
-            'alamat' => $request->alamat,
             'no_telp' => $request->no_telp,
-            'role' => $request->role,
+            'alamat' => $request->alamat,
         ]);
 
         return redirect()
-                ->route('admin.dashboard')
-                ->with('success', 'User berhasil diupdate');
+            ->route('crud.index')
+            ->with('success', 'User berhasil diupdate');
     }
 
-    /**
-     * Hapus user
-     */
-    public function destroy(User $user)
+    // DELETE
+    public function destroy(User $crud)
     {
-        $user->delete();
+        $crud->delete();
 
         return redirect()
-                ->route('admin.dashboard')
-                ->with('success', 'User berhasil dihapus');
+            ->route('crud.index')
+            ->with('success', 'User berhasil dihapus');
     }
 }
