@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Kamera;
+use App\Models\Transaksi;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -13,8 +15,9 @@ class CrudController extends Controller
     public function index()
     {
         $users = User::latest()->get();
-
-        return view('admin.dashboard', compact('users'));
+        $kameras = Kamera::latest()->get();
+        $transaksis = Transaksi::with(['kamera', 'user'])->latest()->get();
+        return view('admin.dashboard', compact('users', 'kameras', 'transaksis'));
     }
 
     // FORM CREATE

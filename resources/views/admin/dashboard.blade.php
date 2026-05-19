@@ -169,6 +169,18 @@
         .btn-delete { border-color: var(--border); color: var(--danger); background: transparent; }
         .btn-delete:hover { border-color: var(--danger); background: rgba(229,115,115,0.05); }
 
+        /* Tombol Download Kontrak */
+        .btn-kontrak {
+            border-color: var(--border);
+            color: var(--cream);
+            background: transparent;
+        }
+        .btn-kontrak:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+            background: rgba(201,168,76,0.05);
+        }
+
         /* Table Style */
         .table-responsive { width: 100%; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
@@ -220,6 +232,15 @@
                     </svg>
                     Manajemen User
                 </a>
+
+                <!-- Nav Tab 3: History Penyewa -->
+                <a onclick="switchTab('history')" id="nav-history" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    History Penyewa
+                </a>
             </div>
         </div>
 
@@ -250,48 +271,32 @@
         <div class="stats-grid">
             <div class="stat-box">
                 <div class="stat-label">Total Kamera</div>
-                <div class="stat-value">36 Unit</div>
+                <div class="stat-value">{{ $totalKamera }} Unit</div>
             </div>
             <div class="stat-box">
                 <div class="stat-label">Sedang Disewa</div>
-                <div class="stat-value">12 Kamera</div>
+                <div class="stat-value">{{ $sedangDisewa }} Kamera</div>
             </div>
             <div class="stat-box">
                 <div class="stat-label">Total Pengguna</div>
-                <div class="stat-value">1,204 Terdaftar</div>
+                <div class="stat-value">{{ $totalUser }} Terdaftar</div>
             </div>
         </div>
-
-        <!-- SECTION: CRUD KAMERA -->
         <!-- SECTION: CRUD KAMERA -->
         <section id="section-kamera" class="section-card">
-
             <div class="table-header">
-                <h2 class="table-title">
-                    Daftar Inventaris Kamera
-                </h2>
-                <!-- Tombol Tambah Kamera -->
-                <a
-                    href="{{ route('kamera.create') }}"
-                    class="btn btn-gold"
-                >
+                <h2 class="table-title">Daftar Inventaris Kamera</h2>
+                <a href="{{ route('kamera.create') }}" class="btn btn-gold">
                     + Tambah Kamera
                 </a>
             </div>
-            <!-- Alert Success -->
+
             @if(session('success'))
-                <div
-                    style="
-                        background: #14532d;
-                        color: white;
-                        padding: 10px;
-                        margin-bottom: 15px;
-                        border-radius: 8px;
-                    "
-                >
+                <div style="background: #14532d; color: white; padding: 10px; margin-bottom: 15px; border-radius: 8px;">
                     {{ session('success') }}
                 </div>
             @endif
+
             <div class="table-responsive">
                 <table>
                     <thead>
@@ -307,76 +312,33 @@
                     <tbody>
                         @forelse($kameras as $kamera)
                             <tr>
-                                <!-- ID -->
-                                <td>
-                                    #CAM-{{ $kamera->id }}
-                                </td>
-                                <!-- Nama Kamera -->
-                                <td
-                                    style="
-                                        color: var(--white);
-                                        font-weight: 500;
-                                    "
-                                >
-                                    {{ $kamera->nama_kamera }}
-                                </td>
-                                <!-- Brand -->
-                                <td>
-                                    {{ $kamera->brand }}
-                                </td>
-                                <!-- Harga -->
-                                <td>
-                                    Rp {{ number_format($kamera->harga, 0, ',', '.') }}
-                                </td>
-                                <!-- Status -->
+                                <td>#CAM-{{ $kamera->id }}</td>
+                                <td style="color: var(--white); font-weight: 500;">{{ $kamera->nama_kamera }}</td>
+                                <td>{{ $kamera->brand }}</td>
+                                <td>Rp {{ number_format($kamera->harga, 0, ',', '.') }}</td>
                                 <td>
                                     @if($kamera->stock > 0)
-                                        <span class="badge badge-success">
-                                            Tersedia
-                                        </span>
+                                        <span class="badge badge-success">Tersedia</span>
                                     @else
-                                        <span class="badge badge-warning">
-
-                                            Habis
-                                        </span>
+                                        <span class="badge badge-warning">Habis</span>
                                     @endif
                                 </td>
-                                <!-- Aksi -->
-                                <td
-                                    style="
-                                        display: flex;
-                                        gap: 5px;
-                                    "
-                                >
-                                    <!-- Tombol Edit -->
-                                    <a
-                                        href="{{ route('kamera.edit', $kamera->id) }}"
-                                        class="btn btn-action btn-edit"
-                                    >
-                                        Edit
-                                    </a>
-                                    <!-- Tombol Delete -->
+                                <td style="display: flex; gap: 5px;">
+                                    <a href="{{ route('kamera.edit', $kamera->id) }}" class="btn btn-action btn-edit">Edit</a>
                                     <form
                                         action="{{ route('kamera.destroy', $kamera->id) }}"
                                         method="POST"
                                         onsubmit="return confirm('Yakin ingin menghapus kamera ini?')"
-                                >
+                                    >
                                         @csrf
                                         @method('DELETE')
-                                        <button
-                                            type="submit"
-                                            class="btn btn-action btn-delete"
-                                        >
-                                            Hapus
-                                        </button>
+                                        <button type="submit" class="btn btn-action btn-delete">Hapus</button>
                                     </form>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" style="text-align:center;">
-                                    Data kamera belum tersedia
-                                </td>
+                                <td colspan="6" style="text-align:center;">Data kamera belum tersedia</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -387,38 +349,19 @@
         <!-- SECTION: CRUD USER -->
         <section id="section-user" class="section-card hidden">
             <div class="table-header">
-                <h2 class="table-title">
-                    Data Pengguna Terdaftar
-                </h2>
-                <a
-                    href="{{ route('crud.create') }}"
-                    class="btn btn-gold">
-                    + Tambah User Baru
-                </a>
+                <h2 class="table-title">Data Pengguna Terdaftar</h2>
+                <a href="{{ route('crud.create') }}" class="btn btn-gold">+ Tambah User Baru</a>
             </div>
 
             @if(session('success'))
-
-                <div
-                    style="
-                        background: #14532d;
-                        color: white;
-                        padding: 10px;
-                        margin-bottom: 15px;
-                        border-radius: 8px;
-                    "
-                >
+                <div style="background: #14532d; color: white; padding: 10px; margin-bottom: 15px; border-radius: 8px;">
                     {{ session('success') }}
                 </div>
-
             @endif
 
             <div class="table-responsive">
-
                 <table>
-
                     <thead>
-
                         <tr>
                             <th>ID User</th>
                             <th>Nama Lengkap</th>
@@ -427,110 +370,103 @@
                             <th>Tanggal Bergabung</th>
                             <th>Aksi</th>
                         </tr>
-
                     </thead>
-
                     <tbody>
-
                         @forelse($users as $user)
-
                             <tr>
-
+                                <td>#USR-{{ $user->id }}</td>
+                                <td style="color: var(--white); font-weight: 500;">{{ $user->name }}</td>
+                                <td>{{ $user->email }}</td>
                                 <td>
-                                    #USR-{{ $user->id }}
-                                </td>
-
-                                <td
-                                    style="
-                                        color: var(--white);
-                                        font-weight: 500;
-                                    "
-                                >
-                                    {{ $user->name }}
-                                </td>
-
-                                <td>
-                                    {{ $user->email }}
-                                </td>
-
-                                <td>
-
                                     @if($user->role == 'admin')
-
-                                        <span class="badge badge-warning">
-                                            Administrator
-                                        </span>
-
+                                        <span class="badge badge-warning">Administrator</span>
                                     @else
-
-                                        <span class="badge badge-success">
-                                            Customer
-                                        </span>
-
+                                        <span class="badge badge-success">Customer</span>
                                     @endif
-
                                 </td>
-
-                                <td>
-                                    {{ $user->created_at->format('d M Y') }}
-                                </td>
-
-                                <td
-                                    style="
-                                        display: flex;
-                                        gap: 5px;
-                                    "
-                                >
-
-                                    <a
-                                        href="{{ route('crud.edit', $user->id) }}"
-                                        class="btn btn-action btn-edit"
-                                    >
-                                        Edit
-                                    </a>
-
+                                <td>{{ $user->created_at->format('d M Y') }}</td>
+                                <td style="display: flex; gap: 5px;">
+                                    <a href="{{ route('crud.edit', $user->id) }}" class="btn btn-action btn-edit">Edit</a>
                                     <form
                                         action="{{ route('crud.destroy', $user->id) }}"
                                         method="POST"
                                         onsubmit="return confirm('Yakin ingin menghapus user ini?')"
                                     >
-
                                         @csrf
                                         @method('DELETE')
-
-                                        <button
-                                            type="submit"
-                                            class="btn btn-action btn-delete"
-                                        >
-                                            Hapus
-                                        </button>
-
+                                        <button type="submit" class="btn btn-action btn-delete">Hapus</button>
                                     </form>
-
                                 </td>
-
                             </tr>
-
                         @empty
-
                             <tr>
-
-                                <td colspan="6" style="text-align:center;">
-
-                                    Data user belum tersedia
-
-                                </td>
-
+                                <td colspan="6" style="text-align:center;">Data user belum tersedia</td>
                             </tr>
-
                         @endforelse
-
                     </tbody>
-
                 </table>
+            </div>
+        </section>
 
+        <!-- SECTION: HISTORY PENYEWA -->
+        <section id="section-history" class="section-card hidden">
+            <div class="table-header">
+                <h2 class="table-title">Riwayat Penyewaan</h2>
             </div>
 
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID Transaksi</th>
+                            <th>Penyewa</th>
+                            <th>Kamera</th>
+                            <th>Tanggal Sewa</th>
+                            <th>Tanggal Pengembalian</th>
+                            <th>Metode Pembayaran</th>
+                            <th>Status</th>
+                            <th>Kontrak</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($transaksis as $transaksi)
+                            <tr>
+                                <td style="color: var(--gold-lt);">#TRX-{{ $transaksi->id }}</td>
+                                <td style="color: var(--white); font-weight: 500;">{{ $transaksi->user->name ?? '-' }}</td>
+                                <td style="color: var(--white); font-weight: 500;">{{ $transaksi->kamera->nama_kamera }}</td>
+                                <td>{{ $transaksi->tanggal_sewa }}</td>
+                                <td>{{ $transaksi->tanggal_pengembalian }}</td>
+                                <td>{{ strtoupper($transaksi->metode_pembayaran) }}</td>
+                                <td>
+                                    @if(now() > $transaksi->tanggal_pengembalian)
+                                        <span class="badge badge-success">Selesai</span>
+                                    @else
+                                        <span class="badge badge-warning">Disewa</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <a
+                                        href="{{ route('sewa.kontrak', $transaksi->id) }}"
+                                        target="_blank"
+                                        class="btn btn-action btn-kontrak"
+                                    >
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                            <polyline points="7 10 12 15 17 10"/>
+                                            <line x1="12" y1="15" x2="12" y2="3"/>
+                                        </svg>
+                                        Download Kontrak
+                                    </a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" style="text-align:center;">Belum ada riwayat penyewaan</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </section>
 
     </main>
@@ -538,36 +474,38 @@
     <!-- JAVASCRIPT UNTUK SIMULASI PERPINDAHAN NAVBAR CRUD -->
     <script>
         function switchTab(target) {
-            // Ambil elemen section
-            const secKamera = document.getElementById('section-kamera');
-            const secUser = document.getElementById('section-user');
-            
-            // Ambil elemen link nav
-            const navKamera = document.getElementById('nav-kamera');
-            const navUser = document.getElementById('nav-user');
+            const secKamera  = document.getElementById('section-kamera');
+            const secUser    = document.getElementById('section-user');
+            const secHistory = document.getElementById('section-history');
 
-            // Ambil teks header
-            const title = document.getElementById('dashboard-title');
+            const navKamera  = document.getElementById('nav-kamera');
+            const navUser    = document.getElementById('nav-user');
+            const navHistory = document.getElementById('nav-history');
+
+            const title    = document.getElementById('dashboard-title');
             const subtitle = document.getElementById('dashboard-subtitle');
+
+            // Sembunyikan semua section & nonaktifkan semua nav
+            [secKamera, secUser, secHistory].forEach(s => s.classList.add('hidden'));
+            [navKamera, navUser, navHistory].forEach(n => n.classList.remove('active'));
 
             if (target === 'kamera') {
                 secKamera.classList.remove('hidden');
-                secUser.classList.add('hidden');
-                
                 navKamera.classList.add('active');
-                navUser.classList.remove('active');
-
-                title.innerText = "Pengelolaan Kamera";
+                title.innerText    = "Pengelolaan Kamera";
                 subtitle.innerText = "Atur ketersediaan dan aset kamera studio Anda.";
+
             } else if (target === 'user') {
                 secUser.classList.remove('hidden');
-                secKamera.classList.add('hidden');
-                
                 navUser.classList.add('active');
-                navKamera.classList.remove('active');
-
-                title.innerText = "Manajemen Pengguna";
+                title.innerText    = "Manajemen Pengguna";
                 subtitle.innerText = "Kelola data akun, verifikasi customer, dan hak akses admin.";
+
+            } else if (target === 'history') {
+                secHistory.classList.remove('hidden');
+                navHistory.classList.add('active');
+                title.innerText    = "History Penyewa";
+                subtitle.innerText = "Pantau seluruh riwayat transaksi dan status penyewaan kamera.";
             }
         }
     </script>
