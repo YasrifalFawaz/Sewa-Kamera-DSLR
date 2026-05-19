@@ -7,6 +7,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Tambahkan CSRF Token Meta untuk keamanan AJAX Request -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Dashboard Member — LensRent</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -373,7 +375,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="6" style="text-align:center;">Belum ada riwayat penyewaan</td></tr>
+                            <tr><td colspan="7" style="text-align:center;">Belum ada riwayat penyewaan</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -389,7 +391,8 @@
             <h2 class="modal-title">Form Penyewaan</h2>
             <p class="modal-subtitle">Lengkapi data penyewaan kamera Anda</p>
 
-            <form action="{{ route('sewa.store') }}" method="POST">
+            <!-- 1. Perubahan: Tambahkan ID pada form dan hapus action bawaan -->
+            <form id="rentalForm">
                 @csrf
                 <input type="hidden" name="kamera_id" id="kameraId">
                 <input type="hidden" name="metode_pembayaran" id="metodePembayaran">
@@ -415,13 +418,13 @@
                 <!-- Tanggal Sewa -->
                 <div class="field">
                     <label>Tanggal Mulai</label>
-                    <input type="date" name="tanggal_sewa" required>
+                    <input type="date" name="tanggal_sewa" id="tanggalSewa" required>
                 </div>
 
                 <!-- Tanggal Kembali -->
                 <div class="field">
                     <label>Tanggal Pengembalian</label>
-                    <input type="date" name="tanggal_pengembalian" required>
+                    <input type="date" name="tanggal_pengembalian" id="tanggalPengembalian" required>
                 </div>
 
                 <!-- ===== METODE PEMBAYARAN ===== -->
@@ -429,46 +432,18 @@
                     <label class="pm-section-label">Metode Pembayaran</label>
 
                     <div class="pm-grid">
-
                         <!-- GoPay -->
-                        <div class="pm-card" onclick="selectPM(this,'gopay','INSTRUKSI GOPAY','0812-3456-7890','LensRent Official','2 jam setelah order')">
+                        <div class="pm-card full" onclick="selectPM(this,'gopay','INSTRUKSI midtrans','0812-3456-7890','LensRent Official','2 jam setelah order')">
                             <div class="pm-icon" style="background:#00AED6;">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="white" fill-opacity="0.2"/><text x="12" y="16.5" text-anchor="middle" font-size="10" font-weight="900" fill="white" font-family="Arial">G</text></svg>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="white" fill-opacity="0.2"/><text x="12" y="16.5" text-anchor="middle" font-size="10" font-weight="900" fill="white" font-family="Arial">M</text></svg>
                             </div>
                             <div class="pm-info">
-                                <div class="pm-name">GoPay</div>
-                                <div class="pm-desc">E-wallet Gojek</div>
+                                <div class="pm-name">Midtrans</div>
+                                <div class="pm-desc">Bayar Otomatis via Midtrans</div>
                             </div>
                         </div>
 
-                        <!-- OVO -->
-                        <div class="pm-card" onclick="selectPM(this,'ovo','INSTRUKSI OVO','0812-3456-7890','LensRent Official','2 jam setelah order')">
-                            <div class="pm-icon" style="background:#4C2A86; font-size:10px;">OVO</div>
-                            <div class="pm-info">
-                                <div class="pm-name">OVO</div>
-                                <div class="pm-desc">E-wallet OVO</div>
-                            </div>
-                        </div>
-
-                        <!-- QRIS -->
-                        <div class="pm-card" onclick="selectPM(this,'qris','INSTRUKSI QRIS','Scan QR di kasir','LensRent Official','2 jam setelah order')">
-                            <div class="pm-icon" style="background:#E83030; font-size:10px; letter-spacing:0;">QR</div>
-                            <div class="pm-info">
-                                <div class="pm-name">QRIS</div>
-                                <div class="pm-desc">Semua e-wallet & bank</div>
-                            </div>
-                        </div>
-
-                        <!-- Debit / Kredit -->
-                        <div class="pm-card" onclick="selectPM(this,'debit','INSTRUKSI DEBIT/KREDIT','Bayar saat pengambilan','LensRent Official','—')">
-                            <div class="pm-icon" style="background:#2563EB;">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-                            </div>
-                            <div class="pm-info">
-                                <div class="pm-name">Debit / Kredit</div>
-                                <div class="pm-desc">Visa · Mastercard</div>
-                            </div>
-                        </div>
+                       
 
                         <!-- Cash (full width) -->
                         <div class="pm-card full" onclick="selectPM(this,'cash','INSTRUKSI CASH','Bayar tunai di tempat','LensRent Official','Saat pengambilan kamera')">
@@ -480,12 +455,11 @@
                                 <div class="pm-desc">Serahkan tunai saat pengambilan kamera</div>
                             </div>
                         </div>
-
                     </div>
 
-                    <!-- Instruksi Panel (muncul saat metode dipilih) -->
+                    <!-- Instruksi Panel -->
                     <div class="pm-instruction" id="pmInstruction">
-                        <div class="pm-instruction-title" id="pmInstrTitle">INSTRUKSI GOPAY</div>
+                        <div class="pm-instruction-title" id="pmInstrTitle">INSTRUKSI Midtrans</div>
                         <div class="pm-instr-row">
                             <span class="instr-key" id="pmInstrKey1Label">Nomor / Kode</span>
                             <span class="instr-val" id="pmInstrKey1Value">—</span>
@@ -499,15 +473,18 @@
                             <span class="instr-val" id="pmInstrBatas">—</span>
                         </div>
                     </div>
-
                 </div>
                 <!-- END METODE PEMBAYARAN -->
 
-                <button type="submit" class="submit-btn" id="submitBtn">Ajukan Penyewaan</button>
-                <p class="pm-notice">Transaksi aman & terenkripsi · LensRent © 2024</p>
+                <!-- 2. Perubahan: Ubah type menjadi button agar tidak langsung submit refresh -->
+                <button type="button" class="submit-btn" id="submitBtn">Ajukan Penyewaan</button>
+                <p class="pm-notice">Transaksi aman & terenkripsi · LensRent © 2026</p>
             </form>
         </div>
     </div>
+
+    <!-- Script Midtrans Snap Integration -->
+    <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('services.midtrans.client_key') }}"></script>
 
     <script>
         /* ---- NAV SWITCH ---- */
@@ -550,6 +527,7 @@
         }
 
         function closeRentalModal() {
+            document.getElementById('rentalModal').classList.remove('remove');
             document.getElementById('rentalModal').classList.remove('open');
         }
 
@@ -560,20 +538,16 @@
 
         /* ---- PILIH METODE PEMBAYARAN ---- */
         function selectPM(el, val, instrTitle, instrNomor, instrNama, instrBatas) {
-            // Hilangkan active semua
             document.querySelectorAll('.pm-card').forEach(c => c.classList.remove('active'));
             el.classList.add('active');
 
-            // Set hidden input
             document.getElementById('metodePembayaran').value = val;
 
-            // Isi panel instruksi
             document.getElementById('pmInstrTitle').textContent    = instrTitle;
             document.getElementById('pmInstrKey1Value').textContent = instrNomor;
-            document.getElementById('pmInstrNama').textContent      = instrNama;
+            document.getElementById('pmInstrNama').textContent       = instrNama;
             document.getElementById('pmInstrBatas').textContent     = instrBatas;
 
-            // Label kolom kiri sesuai metode
             const keyLabel = document.getElementById('pmInstrKey1Label');
             if (val === 'bca' || val === 'bni') {
                 keyLabel.textContent = 'Nomor VA';
@@ -587,12 +561,100 @@
                 keyLabel.textContent = 'Instruksi';
             }
 
-            // Tampilkan panel
             const panel = document.getElementById('pmInstruction');
             panel.classList.remove('show');
-            void panel.offsetWidth; // reflow untuk animasi ulang
+            void panel.offsetWidth; 
             panel.classList.add('show');
         }
+
+        /* ---- MIDTRANS PROSES HANDLER ---- */
+        document.getElementById('submitBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+
+            const kameraId = document.getElementById('kameraId').value;
+            const tanggalSewa = document.getElementById('tanggalSewa').value;
+            const tanggalPengembalian = document.getElementById('tanggalPengembalian').value;
+            const metodePembayaran = document.getElementById('metodePembayaran').value;
+
+            if(!tanggalSewa || !tanggalPengembalian || !metodePembayaran) {
+                alert('Harap lengkapi tanggal dan pilih metode pembayaran terlebih dahulu!');
+                return;
+            }
+
+            // Jika memilih Cash, tidak perlu lewat payment gateway Midtrans
+            if (metodePembayaran === 'cash') {
+                const formData = new FormData();
+                formData.append('kamera_id', kameraId);
+                formData.append('tanggal_sewa', tanggalSewa);
+                formData.append('tanggal_pengembalian', tanggalPengembalian);
+                formData.append('metode_pembayaran', 'cash');
+
+                fetch("{{ route('sewa.store') }}", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.success) {
+                        alert('Pemesanan Cash berhasil dibuat!');
+                        window.location.reload();
+                    } else {
+                        alert('Gagal: ' + data.message);
+                    }
+                });
+                return;
+            }
+
+            // Jika memilih Online Payment, generate Snap Token ke Backend controller
+            const reqBody = {
+                kamera_id: kameraId,
+                tanggal_sewa: tanggalSewa,
+                tanggal_pengembalian: tanggalPengembalian,
+                metode_pembayaran: metodePembayaran
+            };
+
+            fetch("{{ route('sewa.store') }}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    "Accept": "application/json"
+                },
+                body: JSON.stringify(reqBody)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.snap_token) {
+                    closeRentalModal();
+                    // Panggil Pop-up Midtrans Snap
+                    window.snap.pay(data.snap_token, {
+                        onSuccess: function(result) {
+                            alert("Pembayaran Berhasil!");
+                            window.location.reload();
+                        },
+                        onPending: function(result) {
+                            alert("Menunggu Pembayaran Anda.");
+                            window.location.reload();
+                        },
+                        onError: function(result) {
+                            alert("Pembayaran Gagal!");
+                        },
+                        onClose: function() {
+                            alert('Anda menutup popup tanpa menyelesaikan pembayaran.');
+                        }
+                    });
+                } else {
+                    alert('Error: ' + (data.message || 'Gagal mengambil Token Transaksi.'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan jaringan atau sistem.');
+            });
+        });
     </script>
 </body>
 </html>
