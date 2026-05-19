@@ -35,6 +35,13 @@ class SewaController extends Controller
     // simpan transaksi sewa
     public function store(Request $request)
     {
+
+        $kamera = Kamera::findOrFail($request->kamera_id);
+
+        // cek stok
+        if ($kamera->stock <= 0) {
+            return back()->with('error', 'Stok kamera habis, tidak dapat disewa.');
+        }
         $request->validate([
             'kamera_id' => 'required',
             'tanggal_sewa' => 'required|date',
@@ -55,12 +62,18 @@ class SewaController extends Controller
                 $request->metode_pembayaran,
         ]);
 
+        // kurangi stok
+        $kamera->stock -= 1;
+        $kamera->save();
+
         return redirect()
             ->route('user.dashboard')
             ->with(
                 'success',
                 'Kamera berhasil disewa'
             );
+
+        
     }
 
     public function generateKontrak($id)

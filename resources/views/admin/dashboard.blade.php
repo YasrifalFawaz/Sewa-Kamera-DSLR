@@ -305,6 +305,7 @@
                             <th>Nama Kamera</th>
                             <th>Brand</th>
                             <th>Harga Sewa /Hari</th>
+                            <th>Stok</th>
                             <th>Status</th>
                             <th>Aksi</th>
                         </tr>
@@ -316,6 +317,7 @@
                                 <td style="color: var(--white); font-weight: 500;">{{ $kamera->nama_kamera }}</td>
                                 <td>{{ $kamera->brand }}</td>
                                 <td>Rp {{ number_format($kamera->harga, 0, ',', '.') }}</td>
+                                <td>{{ $kamera->stock }}</td>
                                 <td>
                                     @if($kamera->stock > 0)
                                         <span class="badge badge-success">Tersedia</span>
@@ -334,6 +336,11 @@
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-action btn-delete">Hapus</button>
                                     </form>
+                                    @if(session('error'))
+                                        <div class="alert alert-danger">
+                                            {{ session('error') }}
+                                        </div>
+                                    @endif
                                 </td>
                             </tr>
                         @empty
