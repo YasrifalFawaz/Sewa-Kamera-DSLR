@@ -531,12 +531,12 @@
                             <div class="pm-icon" style="background:#00AED6;">
                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                                     <circle cx="12" cy="12" r="9" fill="white" fill-opacity="0.15"/>
-                                    <text x="12" y="16.5" text-anchor="middle" font-size="10" font-weight="900" fill="white" font-family="Arial">G</text>
+                                    <text x="12" y="16.5" text-anchor="middle" font-size="10" font-weight="900" fill="white" font-family="Arial">M</text>
                                 </svg>
                             </div>
 
                             <div class="pm-info">
-                                <div class="pm-name">GoPay via Midtrans</div>
+                                <div class="pm-name">Midtrans</div>
                                 <div class="pm-desc">
                                     Pembayaran online aman menggunakan Midtrans
                                 </div>
@@ -553,7 +553,7 @@
                                 </svg>
                             </div>
                             <div class="pm-info">
-                                <div class="pm-name">Bayar Cash + Verifikasi AI</div>
+                                <div class="pm-name">Bayar Cash + Verifikasi Uang</div>
                                 <div class="pm-desc">Scan uang asli via kamera — terdeteksi otomatis</div>
                             </div>
                         </div>
@@ -563,7 +563,7 @@
                     <div class="ai-detection-panel" id="aiDetectionPanel">
                         <div class="ai-panel-header">
                             <div class="ai-pulse" id="aiPulse"></div>
-                            <div class="ai-panel-title">Verifikasi Uang Asli — AI Vision</div>
+                            <div class="ai-panel-title">Verifikasi Uang Asli</div>
                         </div>
 
                         <button type="button" class="scan-btn" id="startScanBtn" onclick="startMoneyDetection()">
@@ -577,8 +577,17 @@
                             <div class="scan-progress-bar" id="scanBar"></div>
                         </div>
 
+                                                <!-- Ganti bagian dalam AI DETECTION PANEL Anda dengan struktur ini -->
                         <div id="moneyStatus">
                             Pilih metode cash lalu tekan tombol di atas untuk memindai uang Anda.
+                        </div>
+
+                        <!-- ELEMEN BARU: Untuk menampilkan visualisasi kecocokan fitur dari AI -->
+                        <div id="aiVisualContainer" style="display: none; margin-top: 12px; border: 1px solid var(--gold); background: #000; padding: 5px;">
+                            <p style="font-size: 0.65rem; color: var(--gold); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 5px; padding-left: 2px;">
+                                Peta Kecocokan Fitur Unik (Kamera Kiri ↔ Template Kanan):
+                            </p>
+                            <img id="aiVisualImg" src="" alt="Visual Analisis AI" style="width: 100%; height: auto; display: block;">
                         </div>
                     </div>
                     <!-- END AI DETECTION PANEL -->
@@ -679,6 +688,11 @@
             document.getElementById('startScanBtn').disabled      = false;
             document.getElementById('startScanBtn').innerHTML     = '📷 &nbsp; Aktifkan Kamera &amp; Scan Uang';
             document.getElementById('scanBar').classList.remove('scanning');
+            
+            // Reset tambahan untuk container visual
+            document.getElementById('aiVisualContainer').style.display = 'none';
+            document.getElementById('aiVisualImg').src = '';
+            
             isDetecting = false;
         }
 
@@ -759,17 +773,26 @@
                     body: JSON.stringify({ image: imageBase64 })
                 });
 
+                // Ganti logika handling fetch di dalam fungsi detectMoneyFrame() Anda dengan ini:
+                // Ganti logika handling fetch di dalam fungsi detectMoneyFrame() Anda dengan blok ini:
                 const data = await response.json();
 
                 if (data.valid) {
-                    // Uang terdeteksi valid
-                    const nominal = data.nominal ? ` — Nominal: ${data.nominal}` : '';
-                    updateStatus('✅ ' + data.message + nominal, '#81c784');
+                    const nominal = data.nominal ? ` — <b>${data.nominal}</b>` : '';
+                    
+                    // Kemas alasan deteksi dalam format text block info yang rapi
+                    const analisaDeskripsi = data.reason ? 
+                        `<div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed rgba(129,199,132,0.3); color: #ccc; font-size: 0.78rem; line-height: 1.4;">
+                            ${data.reason}
+                        </div>` : '';
+                    
+                    // Update kotak status pembayaran dengan warna sukses (hijau)
+                    updateStatus('✅ ' + data.message + nominal + analisaDeskripsi, '#81c784');
 
-                    // Aktifkan tombol submit
+                    // Aktifkan tombol Ajukan Penyewaan karena verifikasi uang fisik sukses
                     document.getElementById('submitBtn').disabled = false;
 
-                    // Hentikan deteksi
+                    // Bersihkan interval kamera
                     clearInterval(detectionInterval);
                     detectionInterval = null;
                     stopCamera();
@@ -778,8 +801,8 @@
                     document.getElementById('scanBar').classList.remove('scanning');
 
                 } else {
-                    // Belum valid — tampilkan pesan dan lanjut scan
-                    updateStatus('❌ ' + data.message + ' — Coba arahkan ulang uang Anda.', '#e57373');
+                    // Jika gagal atau uang belum pas posisinya, tampilkan pesan warning merah biasa
+                    updateStatus('❌ ' + data.message, '#e57373');
                     document.getElementById('submitBtn').disabled = true;
                 }
 
