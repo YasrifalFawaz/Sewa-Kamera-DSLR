@@ -7,7 +7,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Tambahkan CSRF Token Meta untuk keamanan AJAX Request -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Dashboard Member — LensRent</title>
 
@@ -16,18 +15,22 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=playfair-display:400,700,900i&family=dm-sans:300,400,500,700&display=swap" rel="stylesheet" />
 
+    {{-- MIDTRANS SNAP --}}
+    <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('services.midtrans.client_key') }}"></script>
+
     <style>
         :root {
-            --black:   #0a0a0a;
-            --charcoal:#111111;
-            --border:  #2a2a2a;
-            --gold:    #c9a84c;
-            --gold-lt: #e8c97a;
-            --cream:   #f5f0e8;
-            --muted:   #777777;
-            --white:   #ffffff;
-            --danger:  #e57373;
-            --sidebar-width: 260px;
+            --black:          #0a0a0a;
+            --charcoal:       #111111;
+            --border:         #2a2a2a;
+            --gold:           #c9a84c;
+            --gold-lt:        #e8c97a;
+            --cream:          #f5f0e8;
+            --muted:          #777777;
+            --white:          #ffffff;
+            --danger:         #e57373;
+            --success:        #81c784;
+            --sidebar-width:  260px;
         }
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -41,6 +44,7 @@
             display: flex;
         }
 
+        /* Noise texture overlay */
         body::before {
             content: '';
             position: fixed; inset: 0;
@@ -48,20 +52,19 @@
             pointer-events: none; z-index: 0; opacity: 0.5;
         }
 
-        /* --- SIDEBAR --- */
+        /* ===================== SIDEBAR ===================== */
         .sidebar {
             width: var(--sidebar-width);
             background: var(--charcoal);
             border-right: 1px solid var(--border);
-            position: fixed;
-            top: 0; bottom: 0; left: 0;
+            position: fixed; top: 0; bottom: 0; left: 0;
             z-index: 10;
-            display: flex;
-            flex-direction: column;
+            display: flex; flex-direction: column;
             padding: 2rem 1.5rem;
         }
-        .sidebar::before {
-            content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 2px; background: var(--gold);
+        .sidebar::after {
+            content: ''; position: absolute; top: 0; right: -1px; bottom: 0;
+            width: 2px; background: linear-gradient(to bottom, transparent, var(--gold), transparent);
         }
         .sidebar .logo {
             font-family: 'Playfair Display', serif;
@@ -70,17 +73,25 @@
             margin-bottom: 3rem; display: block;
         }
         .sidebar .logo span { color: var(--gold); }
+
         .nav-group { display: flex; flex-direction: column; gap: 0.5rem; flex-grow: 1; }
-        .nav-label { font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; padding-left: 0.5rem; }
+        .nav-label {
+            font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase;
+            color: var(--muted); margin-bottom: 0.5rem; padding-left: 0.5rem;
+        }
         .nav-item {
             display: flex; align-items: center; gap: 0.75rem;
             color: var(--cream); text-decoration: none;
             padding: 0.8rem 1rem; font-size: 0.9rem;
             border: 1px solid transparent; transition: all 0.3s;
-            cursor: pointer;
+            cursor: pointer; background: none;
         }
-        .nav-item:hover, .nav-item.active { background: rgba(201,168,76,0.05); border-color: var(--border); color: var(--gold); }
-        .nav-item svg { width: 18px; height: 18px; }
+        .nav-item:hover, .nav-item.active {
+            background: rgba(201,168,76,0.05);
+            border-color: var(--border); color: var(--gold);
+        }
+        .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+
         .sidebar-footer { border-top: 1px solid var(--border); padding-top: 1.5rem; margin-top: auto; }
         .logout-btn {
             display: flex; align-items: center; gap: 0.75rem; color: var(--muted);
@@ -89,120 +100,150 @@
         }
         .logout-btn:hover { color: var(--danger); }
 
-        /* --- MAIN CONTENT --- */
-        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 2.5rem 3rem; position: relative; z-index: 1; }
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; }
+        /* ===================== MAIN ===================== */
+        .main-content {
+            margin-left: var(--sidebar-width); flex-grow: 1;
+            padding: 2.5rem 3rem; position: relative; z-index: 1;
+        }
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 2.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem;
+        }
         .page-title h1 { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: var(--white); }
         .page-title p { font-size: 0.85rem; color: var(--muted); margin-top: 0.25rem; }
-        .user-profile-nav { display: flex; align-items: center; gap: 0.75rem; }
-        .user-avatar { width: 36px; height: 36px; background: var(--border); border: 1px solid var(--gold); display: flex; align-items: center; justify-content: center; font-weight: 500; color: var(--gold-lt); font-size: 0.85rem; }
 
-        /* --- CAMERA GRID --- */
-        .section-card { animation: fadeIn 0.5s ease both; }
+        .user-profile-nav { display: flex; align-items: center; gap: 0.75rem; }
+        .user-avatar {
+            width: 36px; height: 36px; background: var(--border);
+            border: 1px solid var(--gold);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 500; color: var(--gold-lt); font-size: 0.85rem;
+        }
+
+        /* ===================== CAMERA GRID ===================== */
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .camera-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2rem; }
-        .camera-card { background: var(--charcoal); border: 1px solid var(--border); position: relative; transition: all 0.3s ease; display: flex; flex-direction: column; }
+        .section-card { animation: fadeIn 0.5s ease both; }
+
+        .camera-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+        .camera-card {
+            background: var(--charcoal); border: 1px solid var(--border);
+            position: relative; transition: all 0.3s ease;
+            display: flex; flex-direction: column;
+        }
         .camera-card:hover { border-color: var(--gold); transform: translateY(-4px); }
-        .stock-badge { position: absolute; top: 1rem; right: 1rem; z-index: 2; font-size: 0.7rem; font-weight: 500; letter-spacing: 0.05em; padding: 0.25rem 0.6rem; text-transform: uppercase; background: rgba(201, 168, 76, 0.15); color: var(--gold-lt); border: 1px solid var(--gold); }
-        .stock-badge.empty { background: rgba(229, 115, 115, 0.15); color: var(--danger); border-color: var(--danger); }
-        .camera-img { width: 100%; height: 180px; background: #161616; display: flex; flex-direction: column; align-items: center; justify-content: center; border-bottom: 1px solid var(--border); overflow: hidden; position: relative; }
+
+        .stock-badge {
+            position: absolute; top: 1rem; right: 1rem; z-index: 2;
+            font-size: 0.7rem; font-weight: 500; letter-spacing: 0.05em;
+            padding: 0.25rem 0.6rem; text-transform: uppercase;
+            background: rgba(201,168,76,0.15); color: var(--gold-lt); border: 1px solid var(--gold);
+        }
+        .stock-badge.empty {
+            background: rgba(229,115,115,0.15); color: var(--danger); border-color: var(--danger);
+        }
+
+        .camera-img {
+            width: 100%; height: 180px;
+            background: #161616; display: flex; align-items: center; justify-content: center;
+            border-bottom: 1px solid var(--border); overflow: hidden;
+        }
         .camera-img img { width: 100%; height: 100%; object-fit: cover; }
-        .camera-img svg { opacity: 0.25; color: var(--cream); margin-bottom: 0.5rem; }
-        .camera-img span { font-size: 0.75rem; color: #444; letter-spacing: 0.05em; }
+
         .camera-body { padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; gap: 0.75rem; }
-        .camera-body h3 { font-family: 'Playfair Display', serif; font-size: 1.25rem; color: var(--white); font-weight: 700; }
-        .camera-specs-preview { font-size: 0.8rem; color: var(--muted); line-height: 1.4; }
-        .camera-footer { margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(42,42,42,0.5); display: flex; justify-content: space-between; align-items: center; }
+        .camera-body h3 { font-family: 'Playfair Display', serif; font-size: 1.2rem; color: var(--white); }
+        .camera-specs-preview { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+        .camera-footer {
+            margin-top: auto; padding-top: 1rem;
+            border-top: 1px solid rgba(42,42,42,0.5);
+            display: flex; justify-content: space-between; align-items: center;
+        }
         .price-tag { font-size: 0.95rem; color: var(--gold); font-weight: 500; }
         .price-tag span { font-size: 0.75rem; color: var(--muted); font-weight: 300; }
 
-        /* Buttons */
-        .btn { font-family: 'DM Sans', sans-serif; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.6rem 1rem; border: 1px solid transparent; cursor: pointer; transition: all 0.3s; text-decoration: none; }
-        .btn-gold { background: var(--gold); color: var(--black); }
+        /* ===================== BUTTONS ===================== */
+        .btn {
+            font-family: 'DM Sans', sans-serif; font-size: 0.75rem; font-weight: 500;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            padding: 0.6rem 1rem; border: 1px solid transparent;
+            cursor: pointer; transition: all 0.3s; text-decoration: none;
+        }
+        .btn-gold { background: var(--gold); color: var(--black); border-color: var(--gold); }
         .btn-gold:hover { background: var(--gold-lt); transform: translateY(-1px); }
+        .btn-outline { background: transparent; color: var(--gold); border-color: var(--gold); }
+        .btn-outline:hover { background: rgba(201,168,76,0.08); }
         .btn-disabled { background: #222; color: #555; cursor: not-allowed; }
 
-        /* --- HISTORY TABLE --- */
+        /* ===================== HISTORY TABLE ===================== */
         .table-container { background: var(--charcoal); border: 1px solid var(--border); padding: 2rem; }
         .table-responsive { width: 100%; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
-        th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); border-bottom: 1px solid var(--border); padding: 1rem; font-weight: 500; }
+        th {
+            font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em;
+            color: var(--muted); border-bottom: 1px solid var(--border);
+            padding: 1rem; font-weight: 500;
+        }
         td { padding: 1rem; border-bottom: 1px solid rgba(42,42,42,0.5); color: var(--cream); }
         .badge { display: inline-block; padding: 0.25rem 0.5rem; font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
-        .badge-success { background: rgba(129, 199, 132, 0.1); color: #81c784; border: 1px solid rgba(129, 199, 132, 0.2); }
-        .badge-warning { background: rgba(244, 164, 96, 0.1); color: #f4a460; border: 1px solid rgba(244, 164, 96, 0.2); }
+        .badge-success { background: rgba(129,199,132,0.1); color: #81c784; border: 1px solid rgba(129,199,132,0.2); }
+        .badge-warning { background: rgba(244,164,96,0.1); color: #f4a460; border: 1px solid rgba(244,164,96,0.2); }
 
         .hidden { display: none !important; }
 
-        /* ===== MODAL OVERLAY ===== */
+        /* ===================== MODAL OVERLAY ===================== */
         .modal-overlay {
-            display: none;
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            z-index: 9999;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 40px 20px;
-            overflow-y: auto;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.88); z-index: 9999;
+            justify-content: center; align-items: flex-start;
+            padding: 40px 20px; overflow-y: auto;
         }
         .modal-overlay.open { display: flex; }
-
         .modal-box {
-            width: 100%;
-            max-width: 560px;
-            background: #111111;
-            border: 1px solid #2a2a2a;
-            padding: 32px;
-            position: relative;
-            margin: auto;
+            width: 100%; max-width: 580px;
+            background: #111111; border: 1px solid #2a2a2a;
+            padding: 32px; position: relative; margin: auto;
         }
-
         .modal-close {
             position: absolute; top: 14px; right: 16px;
             background: none; border: none; color: #888;
-            font-size: 22px; cursor: pointer; line-height: 1;
-            transition: color 0.2s;
+            font-size: 22px; cursor: pointer; line-height: 1; transition: color 0.2s;
         }
         .modal-close:hover { color: var(--white); }
-
         .modal-title {
             font-family: 'Playfair Display', serif;
             color: var(--white); font-size: 1.6rem; margin-bottom: 4px;
         }
         .modal-subtitle { color: var(--muted); font-size: 0.82rem; margin-bottom: 24px; }
 
-        /* Form Fields */
+        /* ===================== FORM FIELDS ===================== */
         .field { margin-bottom: 16px; }
-        .field label { display: block; margin-bottom: 7px; color: #ccc; font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; }
+        .field label {
+            display: block; margin-bottom: 7px; color: #ccc;
+            font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase;
+        }
         .field input, .field select {
             width: 100%; background: #1a1a1a; border: 1px solid #2a2a2a;
             padding: 11px 14px; color: var(--white); font-size: 0.88rem;
-            font-family: 'DM Sans', sans-serif; outline: none;
-            transition: border-color 0.2s;
+            font-family: 'DM Sans', sans-serif; outline: none; transition: border-color 0.2s;
         }
         .field input:focus, .field select:focus { border-color: var(--gold); }
         .field input[readonly] { color: #888; cursor: default; }
 
-        /* ===== PAYMENT METHOD GRID ===== */
+        /* ===================== PAYMENT METHOD ===================== */
         .pm-section-label {
             font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase;
             color: #666; margin-bottom: 12px;
         }
-
-        .pm-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 9px;
-            margin-bottom: 4px;
-        }
-
+        .pm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 4px; }
         .pm-card {
             display: flex; align-items: center; gap: 12px;
             background: #1a1a1a; border: 1px solid #2a2a2a;
             padding: 12px 14px; cursor: pointer;
             transition: border-color 0.2s, background 0.2s;
-            position: relative;
-            user-select: none;
+            position: relative; user-select: none;
         }
         .pm-card:hover { border-color: var(--gold); background: #1e1c17; }
         .pm-card.active { border-color: var(--gold); background: rgba(201,168,76,0.06); }
@@ -211,7 +252,6 @@
             font-size: 10px; color: var(--gold); font-weight: 700;
         }
         .pm-card.full { grid-column: 1 / -1; }
-
         .pm-icon {
             width: 40px; height: 40px; border-radius: 9px; flex-shrink: 0;
             display: flex; align-items: center; justify-content: center;
@@ -220,34 +260,67 @@
         .pm-info .pm-name { font-size: 13px; font-weight: 500; color: #f0ebe0; line-height: 1.3; }
         .pm-info .pm-desc { font-size: 11px; color: #666; margin-top: 2px; }
 
-        /* Instruksi Panel */
-        .pm-instruction {
+        /* ===================== AI DETECTION PANEL ===================== */
+        .ai-detection-panel {
             display: none;
-            background: #161616;
+            background: #0d0d0d;
             border: 1px solid #2a2a2a;
             border-top: 2px solid var(--gold);
-            padding: 16px 18px;
+            padding: 20px;
             margin-top: 10px;
-            animation: slideIn 0.25s ease;
+            animation: fadeIn 0.3s ease;
         }
-        .pm-instruction.show { display: block; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+        .ai-detection-panel.show { display: block; }
 
-        .pm-instruction-title {
-            font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase;
-            color: var(--gold); margin-bottom: 14px; font-weight: 500;
+        .ai-panel-header {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+        }
+        .ai-panel-title {
+            font-size: 0.68rem; letter-spacing: 0.15em; text-transform: uppercase;
+            color: var(--gold); font-weight: 500;
+        }
+        .ai-pulse {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--gold); flex-shrink: 0;
+            animation: pulse 1.5s ease infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.8); }
         }
 
-        .pm-instr-row {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 10px 0; border-bottom: 1px solid #1f1f1f;
-            font-size: 0.82rem;
+        #moneyVideo {
+            width: 100%; border: 1px solid #2a2a2a;
+            display: block; background: #000;
+            max-height: 200px; object-fit: cover;
         }
-        .pm-instr-row:last-child { border-bottom: none; }
-        .pm-instr-row .instr-key { color: var(--muted); }
-        .pm-instr-row .instr-val { color: var(--gold-lt); font-weight: 500; font-variant-numeric: tabular-nums; }
 
-        /* Submit Button */
+        .scan-btn {
+            width: 100%; background: transparent; border: 1px solid var(--gold);
+            color: var(--gold); padding: 11px; font-size: 0.78rem; font-weight: 600;
+            letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
+            font-family: 'DM Sans', sans-serif; transition: all 0.2s; margin-bottom: 12px;
+        }
+        .scan-btn:hover { background: rgba(201,168,76,0.08); }
+        .scan-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        #moneyStatus {
+            margin-top: 12px; padding: 12px 14px;
+            background: #161616; border: 1px solid #1f1f1f;
+            font-size: 0.83rem; color: #888; line-height: 1.5;
+            min-height: 44px; transition: color 0.3s;
+        }
+
+        .scan-progress {
+            height: 2px; background: #1a1a1a; margin-top: 10px; overflow: hidden;
+        }
+        .scan-progress-bar {
+            height: 100%; width: 0%; background: var(--gold);
+            transition: width 2.5s linear; display: none;
+        }
+        .scan-progress-bar.scanning { display: block; width: 100%; }
+
+        /* ===================== SUBMIT BUTTON ===================== */
         .submit-btn {
             width: 100%; background: var(--gold); color: var(--black);
             border: none; padding: 14px; font-size: 0.8rem; font-weight: 700;
@@ -255,40 +328,60 @@
             margin-top: 20px; transition: background 0.2s, transform 0.1s;
             font-family: 'DM Sans', sans-serif;
         }
-        .submit-btn:hover { background: var(--gold-lt); transform: translateY(-1px); }
+        .submit-btn:hover:not(:disabled) { background: var(--gold-lt); transform: translateY(-1px); }
+        .submit-btn:disabled { background: #252525; color: #555; cursor: not-allowed; transform: none; }
+
         .pm-notice { font-size: 10px; color: #444; text-align: center; margin-top: 10px; letter-spacing: 0.03em; }
+
+        /* Loading spinner */
+        .spinner {
+            display: inline-block; width: 14px; height: 14px;
+            border: 2px solid rgba(0,0,0,0.2); border-top-color: var(--black);
+            border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <!-- SIDEBAR -->
+    <!-- ==================== SIDEBAR ==================== -->
     <aside class="sidebar">
         <div>
             <a href="#" class="logo">Lens<span>Rent</span></a>
             <div class="nav-group">
                 <span class="nav-label">Menu Pelanggan</span>
+
                 <a onclick="switchMenu('penyewaan')" id="nav-penyewaan" class="nav-item active">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                        <circle cx="12" cy="13" r="4"/>
+                    </svg>
                     Penyewaan Kamera
                 </a>
+
                 <a onclick="switchMenu('history')" id="nav-history" class="nav-item">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
                     Riwayat Sewa
                 </a>
             </div>
         </div>
+
         <div class="sidebar-footer">
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
                 <button type="submit" class="logout-btn">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+                    </svg>
                     Keluar Akun
                 </button>
             </form>
         </div>
     </aside>
 
-    <!-- MAIN CONTENT -->
+    <!-- ==================== MAIN ==================== -->
     <main class="main-content">
         <header>
             <div class="page-title">
@@ -296,12 +389,12 @@
                 <p id="menu-subtitle">Pilih kamera terbaik untuk menangkap momen berhargamu.</p>
             </div>
             <div class="user-profile-nav">
-                <span style="font-size: 0.85rem; color: var(--white)">{{ Auth::user()->name ?? 'Member LensRent' }}</span>
-                <div class="user-avatar">U</div>
+                <span style="font-size:0.85rem;color:var(--white)">{{ Auth::user()->name ?? 'Member LensRent' }}</span>
+                <div class="user-avatar">{{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}</div>
             </div>
         </header>
 
-        <!-- SECTION 1: KATALOG -->
+        <!-- SECTION: KATALOG -->
         <section id="section-penyewaan" class="section-card">
             <div class="camera-grid">
                 @forelse($kameras as $kamera)
@@ -311,9 +404,11 @@
                         @else
                             <div class="stock-badge empty">Habis</div>
                         @endif
+
                         <div class="camera-img">
                             <img src="{{ asset('storage/' . $kamera->image) }}" alt="{{ $kamera->nama_kamera }}">
                         </div>
+
                         <div class="camera-body">
                             <h3>{{ $kamera->nama_kamera }}</h3>
                             <p class="camera-specs-preview">{{ Str::limit($kamera->spesifikasi, 100) }}</p>
@@ -333,12 +428,12 @@
                         </div>
                     </div>
                 @empty
-                    <div style="color: white; font-size: 18px;">Data kamera belum tersedia</div>
+                    <div style="color:var(--muted);font-size:0.9rem;padding:2rem 0;">Data kamera belum tersedia.</div>
                 @endforelse
             </div>
         </section>
 
-        <!-- SECTION 2: HISTORY -->
+        <!-- SECTION: HISTORY -->
         <section id="section-history" class="section-card table-container hidden">
             <div class="table-responsive">
                 <table>
@@ -356,8 +451,8 @@
                     <tbody>
                         @forelse($transaksis as $transaksi)
                             <tr>
-                                <td style="color: var(--gold-lt);">#TRX-{{ $transaksi->id }}</td>
-                                <td style="color: var(--white); font-weight: 500;">{{ $transaksi->kamera->nama_kamera }}</td>
+                                <td style="color:var(--gold-lt);">#TRX-{{ $transaksi->id }}</td>
+                                <td style="color:var(--white);font-weight:500;">{{ $transaksi->kamera->nama_kamera }}</td>
                                 <td>{{ $transaksi->tanggal_sewa }}</td>
                                 <td>{{ $transaksi->tanggal_pengembalian }}</td>
                                 <td>{{ strtoupper($transaksi->metode_pembayaran) }}</td>
@@ -369,13 +464,17 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <a href="{{ route('sewa.kontrak', $transaksi->id) }}" target="_blank" class="btn btn-primary btn-sm">
-                                        Download Kontrak
+                                    <a href="{{ route('sewa.kontrak', $transaksi->id) }}" target="_blank" class="btn btn-outline" style="font-size:0.7rem;padding:0.4rem 0.8rem;">
+                                        Download
                                     </a>
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="7" style="text-align:center;">Belum ada riwayat penyewaan</td></tr>
+                            <tr>
+                                <td colspan="7" style="text-align:center;color:var(--muted);padding:2rem;">
+                                    Belum ada riwayat penyewaan
+                                </td>
+                            </tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -383,7 +482,7 @@
         </section>
     </main>
 
-    <!-- ===== MODAL SEWA ===== -->
+    <!-- ==================== MODAL SEWA ==================== -->
     <div id="rentalModal" class="modal-overlay">
         <div class="modal-box">
             <button onclick="closeRentalModal()" class="modal-close">×</button>
@@ -391,103 +490,113 @@
             <h2 class="modal-title">Form Penyewaan</h2>
             <p class="modal-subtitle">Lengkapi data penyewaan kamera Anda</p>
 
-            <!-- 1. Perubahan: Tambahkan ID pada form dan hapus action bawaan -->
             <form id="rentalForm">
                 @csrf
-                <input type="hidden" name="kamera_id" id="kameraId">
-                <input type="hidden" name="metode_pembayaran" id="metodePembayaran">
+                <input type="hidden" name="kamera_id"          id="kameraId">
+                <input type="hidden" name="metode_pembayaran"   id="metodePembayaran">
 
-                <!-- Nama Penyewa -->
                 <div class="field">
                     <label>Nama Penyewa</label>
                     <input type="text" value="{{ Auth::user()->name }}" readonly>
                 </div>
 
-                <!-- Kamera -->
                 <div class="field">
                     <label>Kamera</label>
                     <input type="text" id="kameraNama" readonly>
                 </div>
 
-                <!-- Harga -->
                 <div class="field">
                     <label>Harga Sewa</label>
                     <input type="text" id="kameraHarga" readonly>
                 </div>
 
-                <!-- Tanggal Sewa -->
                 <div class="field">
                     <label>Tanggal Mulai</label>
                     <input type="date" name="tanggal_sewa" id="tanggalSewa" required>
                 </div>
 
-                <!-- Tanggal Kembali -->
                 <div class="field">
                     <label>Tanggal Pengembalian</label>
                     <input type="date" name="tanggal_pengembalian" id="tanggalPengembalian" required>
                 </div>
 
-                <!-- ===== METODE PEMBAYARAN ===== -->
-                <div class="field" style="margin-bottom: 0;">
+                <!-- ========== METODE PEMBAYARAN ========== -->
+                <div class="field" style="margin-bottom:0;">
                     <label class="pm-section-label">Metode Pembayaran</label>
 
                     <div class="pm-grid">
-                        <!-- GoPay -->
-                        <div class="pm-card full" onclick="selectPM(this,'gopay','INSTRUKSI midtrans','0812-3456-7890','LensRent Official','2 jam setelah order')">
+                        <!-- Midtrans -->
+                        <!-- GoPay via Midtrans -->
+                        <div class="pm-card full" onclick="selectPM(this,'gopay')">
                             <div class="pm-icon" style="background:#00AED6;">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="white" fill-opacity="0.2"/><text x="12" y="16.5" text-anchor="middle" font-size="10" font-weight="900" fill="white" font-family="Arial">M</text></svg>
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                                    <circle cx="12" cy="12" r="9" fill="white" fill-opacity="0.15"/>
+                                    <text x="12" y="16.5" text-anchor="middle" font-size="10" font-weight="900" fill="white" font-family="Arial">G</text>
+                                </svg>
                             </div>
+
                             <div class="pm-info">
-                                <div class="pm-name">Midtrans</div>
-                                <div class="pm-desc">Bayar Otomatis via Midtrans</div>
+                                <div class="pm-name">GoPay via Midtrans</div>
+                                <div class="pm-desc">
+                                    Pembayaran online aman menggunakan Midtrans
+                                </div>
                             </div>
                         </div>
 
-                       
-
-                        <!-- Cash (full width) -->
-                        <div class="pm-card full" onclick="selectPM(this,'cash','INSTRUKSI CASH','Bayar tunai di tempat','LensRent Official','Saat pengambilan kamera')">
-                            <div class="pm-icon" style="background:#1a2419; border:1px solid #3a5c30;">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7bc47a" stroke-width="2"><rect x="1" y="6" width="22" height="13" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 9v6M18 9v6"/></svg>
+                        <!-- Cash + AI Detection -->
+                        <div class="pm-card full" onclick="selectPM(this,'cash')">
+                            <div class="pm-icon" style="background:#1a2419;border:1px solid #3a5c30;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7bc47a" stroke-width="2">
+                                    <rect x="1" y="6" width="22" height="13" rx="2"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                    <path d="M6 9v6M18 9v6"/>
+                                </svg>
                             </div>
                             <div class="pm-info">
-                                <div class="pm-name">Bayar Cash di Tempat</div>
-                                <div class="pm-desc">Serahkan tunai saat pengambilan kamera</div>
+                                <div class="pm-name">Bayar Cash + Verifikasi AI</div>
+                                <div class="pm-desc">Scan uang asli via kamera — terdeteksi otomatis</div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Instruksi Panel -->
-                    <div class="pm-instruction" id="pmInstruction">
-                        <div class="pm-instruction-title" id="pmInstrTitle">INSTRUKSI Midtrans</div>
-                        <div class="pm-instr-row">
-                            <span class="instr-key" id="pmInstrKey1Label">Nomor / Kode</span>
-                            <span class="instr-val" id="pmInstrKey1Value">—</span>
+                    <!-- ========== AI DETECTION PANEL ========== -->
+                    <div class="ai-detection-panel" id="aiDetectionPanel">
+                        <div class="ai-panel-header">
+                            <div class="ai-pulse" id="aiPulse"></div>
+                            <div class="ai-panel-title">Verifikasi Uang Asli — AI Vision</div>
                         </div>
-                        <div class="pm-instr-row">
-                            <span class="instr-key">Atas Nama</span>
-                            <span class="instr-val" id="pmInstrNama">—</span>
+
+                        <button type="button" class="scan-btn" id="startScanBtn" onclick="startMoneyDetection()">
+                            📷 &nbsp; Aktifkan Kamera &amp; Scan Uang
+                        </button>
+
+                        <video id="moneyVideo" autoplay playsinline style="display:none;"></video>
+                        <canvas id="moneyCanvas" style="display:none;"></canvas>
+
+                        <div class="scan-progress">
+                            <div class="scan-progress-bar" id="scanBar"></div>
                         </div>
-                        <div class="pm-instr-row">
-                            <span class="instr-key">Batas Bayar</span>
-                            <span class="instr-val" id="pmInstrBatas">—</span>
+
+                        <div id="moneyStatus">
+                            Pilih metode cash lalu tekan tombol di atas untuk memindai uang Anda.
                         </div>
                     </div>
+                    <!-- END AI DETECTION PANEL -->
+
                 </div>
                 <!-- END METODE PEMBAYARAN -->
 
-                <!-- 2. Perubahan: Ubah type menjadi button agar tidak langsung submit refresh -->
-                <button type="button" class="submit-btn" id="submitBtn">Ajukan Penyewaan</button>
-                <p class="pm-notice">Transaksi aman & terenkripsi · LensRent © 2026</p>
+                <button type="button" class="submit-btn" id="submitBtn" disabled onclick="submitRental()">
+                    Ajukan Penyewaan
+                </button>
+                <p class="pm-notice">Transaksi aman &amp; terenkripsi · LensRent © 2026</p>
             </form>
         </div>
     </div>
-
-    <!-- Script Midtrans Snap Integration -->
-    <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('services.midtrans.client_key') }}"></script>
+    <!-- END MODAL -->
 
     <script>
-        /* ---- NAV SWITCH ---- */
+        /* ==================== NAV SWITCH ==================== */
         function switchMenu(target) {
             const secPenyewaan = document.getElementById('section-penyewaan');
             const secHistory   = document.getElementById('section-history');
@@ -501,160 +610,275 @@
                 secHistory.classList.add('hidden');
                 navPenyewaan.classList.add('active');
                 navHistory.classList.remove('active');
-                title.innerText    = "Katalog Kamera";
-                subtitle.innerText = "Pilih kamera terbaik untuk menangkap momen berhargamu.";
+                title.innerText    = 'Katalog Kamera';
+                subtitle.innerText = 'Pilih kamera terbaik untuk menangkap momen berhargamu.';
             } else {
                 secHistory.classList.remove('hidden');
                 secPenyewaan.classList.add('hidden');
                 navHistory.classList.add('active');
                 navPenyewaan.classList.remove('active');
-                title.innerText    = "Riwayat Sewa Anda";
-                subtitle.innerText = "Pantau status pemesanan, waktu pengembalian, dan tagihan Anda.";
+                title.innerText    = 'Riwayat Sewa Anda';
+                subtitle.innerText = 'Pantau status pemesanan, waktu pengembalian, dan tagihan Anda.';
             }
         }
 
-        /* ---- MODAL OPEN / CLOSE ---- */
+        /* ==================== MODAL ==================== */
         function openRentalModal(id, nama, harga) {
             document.getElementById('rentalModal').classList.add('open');
-            document.getElementById('kameraId').value   = id;
-            document.getElementById('kameraNama').value = nama;
+            document.getElementById('kameraId').value    = id;
+            document.getElementById('kameraNama').value  = nama;
             document.getElementById('kameraHarga').value = 'Rp ' + harga + ' / hari';
 
-            // Reset pilihan metode
+            // Reset state
             document.querySelectorAll('.pm-card').forEach(c => c.classList.remove('active'));
             document.getElementById('metodePembayaran').value = '';
-            document.getElementById('pmInstruction').classList.remove('show');
+            document.getElementById('aiDetectionPanel').classList.remove('show');
+            document.getElementById('submitBtn').disabled = true;
+            stopCamera();
+            resetScanUI();
         }
 
         function closeRentalModal() {
-            document.getElementById('rentalModal').classList.remove('remove');
             document.getElementById('rentalModal').classList.remove('open');
+            stopCamera();
         }
 
-        // Tutup modal jika klik di luar box
         document.getElementById('rentalModal').addEventListener('click', function(e) {
             if (e.target === this) closeRentalModal();
         });
 
-        /* ---- PILIH METODE PEMBAYARAN ---- */
-        function selectPM(el, val, instrTitle, instrNomor, instrNama, instrBatas) {
+        /* ==================== PILIH METODE PEMBAYARAN ==================== */
+        function selectPM(el, val) {
             document.querySelectorAll('.pm-card').forEach(c => c.classList.remove('active'));
             el.classList.add('active');
-
             document.getElementById('metodePembayaran').value = val;
 
-            document.getElementById('pmInstrTitle').textContent    = instrTitle;
-            document.getElementById('pmInstrKey1Value').textContent = instrNomor;
-            document.getElementById('pmInstrNama').textContent       = instrNama;
-            document.getElementById('pmInstrBatas').textContent     = instrBatas;
+            const aiPanel  = document.getElementById('aiDetectionPanel');
+            const submitBtn = document.getElementById('submitBtn');
 
-            const keyLabel = document.getElementById('pmInstrKey1Label');
-            if (val === 'bca' || val === 'bni') {
-                keyLabel.textContent = 'Nomor VA';
-            } else if (val === 'gopay' || val === 'ovo') {
-                keyLabel.textContent = 'Nomor GoPay/OVO';
-            } else if (val === 'qris') {
-                keyLabel.textContent = 'Cara Bayar';
-            } else if (val === 'debit') {
-                keyLabel.textContent = 'Cara Bayar';
+            if (val === 'cash') {
+                aiPanel.classList.add('show');
+                submitBtn.disabled = true; // tunggu verifikasi AI
+                resetScanUI();
+                stopCamera();
             } else {
-                keyLabel.textContent = 'Instruksi';
+                aiPanel.classList.remove('show');
+                submitBtn.disabled = false; // midtrans langsung bisa submit
+                stopCamera();
             }
-
-            const panel = document.getElementById('pmInstruction');
-            panel.classList.remove('show');
-            void panel.offsetWidth; 
-            panel.classList.add('show');
         }
 
-        /* ---- MIDTRANS PROSES HANDLER ---- */
-        document.getElementById('submitBtn').addEventListener('click', function(e) {
-            e.preventDefault();
+        /* ==================== AI MONEY DETECTION ==================== */
+        let mediaStream       = null;
+        let detectionInterval = null;
+        let isDetecting       = false;
 
-            const kameraId = document.getElementById('kameraId').value;
-            const tanggalSewa = document.getElementById('tanggalSewa').value;
-            const tanggalPengembalian = document.getElementById('tanggalPengembalian').value;
-            const metodePembayaran = document.getElementById('metodePembayaran').value;
+        function resetScanUI() {
+            updateStatus('Tekan tombol di atas untuk memindai uang Anda.', '#888');
+            document.getElementById('moneyVideo').style.display   = 'none';
+            document.getElementById('startScanBtn').disabled      = false;
+            document.getElementById('startScanBtn').innerHTML     = '📷 &nbsp; Aktifkan Kamera &amp; Scan Uang';
+            document.getElementById('scanBar').classList.remove('scanning');
+            isDetecting = false;
+        }
 
-            if(!tanggalSewa || !tanggalPengembalian || !metodePembayaran) {
-                alert('Harap lengkapi tanggal dan pilih metode pembayaran terlebih dahulu!');
-                return;
+        function stopCamera() {
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(t => t.stop());
+                mediaStream = null;
             }
+            if (detectionInterval) {
+                clearInterval(detectionInterval);
+                detectionInterval = null;
+            }
+            isDetecting = false;
+        }
 
-            // Jika memilih Cash, tidak perlu lewat payment gateway Midtrans
-            if (metodePembayaran === 'cash') {
-                const formData = new FormData();
-                formData.append('kamera_id', kameraId);
-                formData.append('tanggal_sewa', tanggalSewa);
-                formData.append('tanggal_pengembalian', tanggalPengembalian);
-                formData.append('metode_pembayaran', 'cash');
+        async function startMoneyDetection() {
+            if (isDetecting) return;
+            isDetecting = true;
 
-                fetch("{{ route('sewa.store') }}", {
-                    method: "POST",
+            const video      = document.getElementById('moneyVideo');
+            const scanBtn    = document.getElementById('startScanBtn');
+
+            scanBtn.disabled  = true;
+            scanBtn.innerHTML = '<span class="spinner"></span> &nbsp; Mengakses kamera...';
+            updateStatus('⏳ Mengakses kamera perangkat Anda...', '#e8c97a');
+
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                video.srcObject = mediaStream;
+                video.style.display = 'block';
+
+                scanBtn.innerHTML = '🔍 &nbsp; Mendeteksi...';
+                updateStatus('📷 Kamera aktif. Arahkan uang rupiah ke kamera, deteksi berjalan otomatis...', '#e8c97a');
+
+                // Jalankan progress bar animasi tiap siklus
+                triggerProgressBar();
+
+                // Mulai deteksi periodik setiap 2.5 detik
+                detectionInterval = setInterval(async () => {
+                    await detectMoneyFrame();
+                    triggerProgressBar();
+                }, 2500);
+
+            } catch (err) {
+                updateStatus('❌ Kamera gagal diakses. Pastikan izin kamera sudah diberikan.', '#e57373');
+                resetScanUI();
+            }
+        }
+
+        function triggerProgressBar() {
+            const bar = document.getElementById('scanBar');
+            bar.classList.remove('scanning');
+            void bar.offsetWidth; // reflow
+            bar.classList.add('scanning');
+        }
+
+        async function detectMoneyFrame() {
+            const video  = document.getElementById('moneyVideo');
+            const canvas = document.getElementById('moneyCanvas');
+
+            if (!video.videoWidth || !video.videoHeight) return;
+
+            canvas.width  = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+
+            const imageBase64 = canvas.toDataURL('image/jpeg', 0.85);
+
+            updateStatus('🔍 Menganalisis gambar dengan AI Vision...', '#e8c97a');
+
+            try {
+                const response = await fetch("{{ route('detect.money') }}", {
+                    method: 'POST',
                     headers: {
-                        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                     },
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if(data.success) {
-                        alert('Pemesanan Cash berhasil dibuat!');
-                        window.location.reload();
-                    } else {
-                        alert('Gagal: ' + data.message);
-                    }
+                    body: JSON.stringify({ image: imageBase64 })
                 });
+
+                const data = await response.json();
+
+                if (data.valid) {
+                    // Uang terdeteksi valid
+                    const nominal = data.nominal ? ` — Nominal: ${data.nominal}` : '';
+                    updateStatus('✅ ' + data.message + nominal, '#81c784');
+
+                    // Aktifkan tombol submit
+                    document.getElementById('submitBtn').disabled = false;
+
+                    // Hentikan deteksi
+                    clearInterval(detectionInterval);
+                    detectionInterval = null;
+                    stopCamera();
+
+                    document.getElementById('startScanBtn').innerHTML = '✅ &nbsp; Verifikasi Berhasil';
+                    document.getElementById('scanBar').classList.remove('scanning');
+
+                } else {
+                    // Belum valid — tampilkan pesan dan lanjut scan
+                    updateStatus('❌ ' + data.message + ' — Coba arahkan ulang uang Anda.', '#e57373');
+                    document.getElementById('submitBtn').disabled = true;
+                }
+
+            } catch (err) {
+                updateStatus('⚠️ Gagal terhubung ke server AI. Mencoba ulang...', '#f4a460');
+            }
+        }
+
+        function updateStatus(text, color) {
+            const box = document.getElementById('moneyStatus');
+            box.innerHTML   = text;
+            box.style.color = color;
+        }
+
+        /* ==================== SUBMIT RENTAL ==================== */
+        async function submitRental() {
+            const kameraId           = document.getElementById('kameraId').value;
+            const tanggalSewa        = document.getElementById('tanggalSewa').value;
+            const tanggalPengembalian = document.getElementById('tanggalPengembalian').value;
+            const metodePembayaran   = document.getElementById('metodePembayaran').value;
+
+            if (!tanggalSewa || !tanggalPengembalian || !metodePembayaran) {
+                alert('Harap lengkapi semua data dan pilih metode pembayaran!');
                 return;
             }
 
-            // Jika memilih Online Payment, generate Snap Token ke Backend controller
-            const reqBody = {
-                kamera_id: kameraId,
-                tanggal_sewa: tanggalSewa,
-                tanggal_pengembalian: tanggalPengembalian,
-                metode_pembayaran: metodePembayaran
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled  = true;
+            submitBtn.innerHTML = '<span class="spinner"></span> &nbsp; Memproses...';
+
+            const payload = {
+                kamera_id:             kameraId,
+                tanggal_sewa:          tanggalSewa,
+                tanggal_pengembalian:  tanggalPengembalian,
+                metode_pembayaran:     metodePembayaran
             };
 
-            fetch("{{ route('sewa.store') }}", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    "Accept": "application/json"
-                },
-                body: JSON.stringify(reqBody)
-            })
-            .then(response => response.json())
-            .then(data => {
+            try {
+                const response = await fetch("{{ route('sewa.store') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type':  'application/json',
+                        'Accept':        'application/json',
+                        'X-CSRF-TOKEN':  document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                // ---- CASH ----
+                if (metodePembayaran === 'cash') {
+                    if (data.success) {
+                        alert('✅ Penyewaan cash berhasil dibuat!');
+                        window.location.reload();
+                    } else {
+                        alert('Gagal: ' + (data.message || 'Terjadi kesalahan.'));
+                        submitBtn.disabled  = false;
+                        submitBtn.innerHTML = 'Ajukan Penyewaan';
+                    }
+                    return;
+                }
+
+                // ---- MIDTRANS ----
                 if (data.snap_token) {
                     closeRentalModal();
-                    // Panggil Pop-up Midtrans Snap
                     window.snap.pay(data.snap_token, {
-                        onSuccess: function(result) {
-                            alert("Pembayaran Berhasil!");
+                        onSuccess: function() {
+                            alert('✅ Pembayaran berhasil!');
                             window.location.reload();
                         },
-                        onPending: function(result) {
-                            alert("Menunggu Pembayaran Anda.");
+                        onPending: function() {
+                            alert('⏳ Menunggu pembayaran Anda.');
                             window.location.reload();
                         },
-                        onError: function(result) {
-                            alert("Pembayaran Gagal!");
+                        onError: function() {
+                            alert('❌ Pembayaran gagal.');
+                            submitBtn.disabled  = false;
+                            submitBtn.innerHTML = 'Ajukan Penyewaan';
                         },
                         onClose: function() {
-                            alert('Anda menutup popup tanpa menyelesaikan pembayaran.');
+                            submitBtn.disabled  = false;
+                            submitBtn.innerHTML = 'Ajukan Penyewaan';
                         }
                     });
                 } else {
-                    alert('Error: ' + (data.message || 'Gagal mengambil Token Transaksi.'));
+                    alert('Error: ' + (data.message || 'Gagal mendapatkan token transaksi.'));
+                    submitBtn.disabled  = false;
+                    submitBtn.innerHTML = 'Ajukan Penyewaan';
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Terjadi kesalahan jaringan atau sistem.');
-            });
-        });
+
+            } catch (err) {
+                console.error(err);
+                alert('Terjadi kesalahan jaringan atau server.');
+                submitBtn.disabled  = false;
+                submitBtn.innerHTML = 'Ajukan Penyewaan';
+            }
+        }
     </script>
+
 </body>
 </html>
