@@ -27,4 +27,9 @@ class Transaksi extends Model
     {
         return $this->belongsTo(Kamera::class);
     }
+
+    public function kontrak()
+    {
+        return $this->hasOne(Kontrak::class);
+    }
 }

@@ -2,10 +2,21 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Kontrak extends Model
 {
-    use HasFactory;
+    protected $fillable = [
+
+        'transaksi_id',
+        'nama',
+        'no_hp',
+        'alamat',
+        'status',
+    ];
+
+    public function transaksi()
+    {
+        return $this->belongsTo(Transaksi::class);
+    }
 }

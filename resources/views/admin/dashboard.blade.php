@@ -169,7 +169,7 @@
         .btn-delete { border-color: var(--border); color: var(--danger); background: transparent; }
         .btn-delete:hover { border-color: var(--danger); background: rgba(229,115,115,0.05); }
 
-        /* Tombol Download Kontrak */
+        /* Tombol Download & Kelola Kontrak */
         .btn-kontrak {
             border-color: var(--border);
             color: var(--cream);
@@ -198,14 +198,69 @@
         }
         .badge-success { background: rgba(129, 199, 132, 0.1); color: #81c784; border: 1px solid rgba(129, 199, 132, 0.2); }
         .badge-warning { background: rgba(244, 164, 96, 0.1); color: #f4a460; border: 1px solid rgba(244, 164, 96, 0.2); }
+        .badge-danger { background: rgba(229, 115, 115, 0.1); color: #ff8a80; border: 1px solid rgba(229, 115, 115, 0.2); }
 
         /* Utility Hidden Class */
         .hidden { display: none !important; }
+
+        /* --- MODAL MANAGEMENT SYSTEM --- */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-content {
+            background: var(--charcoal);
+            border: 1px solid var(--border);
+            width: 100%;
+            max-width: 500px;
+            padding: 2rem;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            animation: modalSlideUp 0.4s ease;
+        }
+        @keyframes modalSlideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+        }
+        .modal-header h3 { font-family: 'Playfair Display', serif; color: var(--white); font-size: 1.3rem; }
+        .btn-close-modal { background: none; border: none; color: var(--muted); font-size: 1.8rem; cursor: pointer; line-height: 1; }
+        .btn-close-modal:hover { color: var(--danger); }
+        
+        .form-group { margin-bottom: 1.2rem; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .form-group label { display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 0.4rem; }
+        .form-group input, .form-group select {
+            width: 100%; background: var(--black); border: 1px solid var(--border); padding: 0.75rem 1rem; color: var(--cream); font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
+        }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--gold); }
+        .form-group input:disabled { opacity: 0.6; cursor: not-allowed; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; border-top: 1px solid var(--border); padding-top: 1.2rem; }
+
     </style>
 </head>
 <body>
 
-    <!-- SIDEBAR NAVIGATION -->
     <aside class="sidebar">
         <div>
             <a href="#" class="logo">Lens<span>Rent</span></a>
@@ -213,7 +268,6 @@
             <div class="nav-group">
                 <span class="nav-label">Menu Admin</span>
                 
-                <!-- Nav Tab 1: Kamera -->
                 <a onclick="switchTab('kamera')" id="nav-kamera" class="nav-item active">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
@@ -222,7 +276,6 @@
                     Data Kamera
                 </a>
 
-                <!-- Nav Tab 2: User -->
                 <a onclick="switchTab('user')" id="nav-user" class="nav-item">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -233,7 +286,6 @@
                     Manajemen User
                 </a>
 
-                <!-- Nav Tab 3: History Penyewa -->
                 <a onclick="switchTab('history')" id="nav-history" class="nav-item">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"/>
@@ -257,7 +309,6 @@
         </div>
     </aside>
 
-    <!-- MAIN DASHBOARD CONTENT -->
     <main class="main-content">
         
         <header>
@@ -267,7 +318,6 @@
             </div>
         </header>
 
-        <!-- STATS WIDGETS BAR -->
         <div class="stats-grid">
             <div class="stat-box">
                 <div class="stat-label">Total Kamera</div>
@@ -282,7 +332,7 @@
                 <div class="stat-value">{{ $totalUser }} Terdaftar</div>
             </div>
         </div>
-        <!-- SECTION: CRUD KAMERA -->
+
         <section id="section-kamera" class="section-card">
             <div class="table-header">
                 <h2 class="table-title">Daftar Inventaris Kamera</h2>
@@ -291,7 +341,7 @@
                 </a>
             </div>
 
-            @if(session('success'))
+            @if(session('success') && !session('history_active'))
                 <div style="background: #14532d; color: white; padding: 10px; margin-bottom: 15px; border-radius: 8px;">
                     {{ session('success') }}
                 </div>
@@ -325,27 +375,20 @@
                                         <span class="badge badge-warning">Habis</span>
                                     @endif
                                 </td>
-                                <td style="display: flex; gap: 5px;">
-                                    <a href="{{ route('kamera.edit', $kamera->id) }}" class="btn btn-action btn-edit">Edit</a>
-                                    <form
-                                        action="{{ route('kamera.destroy', $kamera->id) }}"
-                                        method="POST"
-                                        onsubmit="return confirm('Yakin ingin menghapus kamera ini?')"
-                                    >
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-action btn-delete">Hapus</button>
-                                    </form>
-                                    @if(session('error'))
-                                        <div class="alert alert-danger">
-                                            {{ session('error') }}
-                                        </div>
-                                    @endif
+                                <td style="width: 150px;">
+                                    <div style="display: flex; gap: 5px;">
+                                        <a href="{{ route('kamera.edit', $kamera->id) }}" class="btn btn-action btn-edit">Edit</a>
+                                        <form action="{{ route('kamera.destroy', $kamera->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus kamera ini?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-action btn-delete">Hapus</button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" style="text-align:center;">Data kamera belum tersedia</td>
+                                <td colspan="7" style="text-align:center;">Data kamera belum tersedia</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -353,18 +396,11 @@
             </div>
         </section>
 
-        <!-- SECTION: CRUD USER -->
         <section id="section-user" class="section-card hidden">
             <div class="table-header">
                 <h2 class="table-title">Data Pengguna Terdaftar</h2>
                 <a href="{{ route('crud.create') }}" class="btn btn-gold">+ Tambah User Baru</a>
             </div>
-
-            @if(session('success'))
-                <div style="background: #14532d; color: white; padding: 10px; margin-bottom: 15px; border-radius: 8px;">
-                    {{ session('success') }}
-                </div>
-            @endif
 
             <div class="table-responsive">
                 <table>
@@ -392,17 +428,15 @@
                                     @endif
                                 </td>
                                 <td>{{ $user->created_at->format('d M Y') }}</td>
-                                <td style="display: flex; gap: 5px;">
-                                    <a href="{{ route('crud.edit', $user->id) }}" class="btn btn-action btn-edit">Edit</a>
-                                    <form
-                                        action="{{ route('crud.destroy', $user->id) }}"
-                                        method="POST"
-                                        onsubmit="return confirm('Yakin ingin menghapus user ini?')"
-                                    >
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-action btn-delete">Hapus</button>
-                                    </form>
+                                <td style="width: 150px;">
+                                    <div style="display: flex; gap: 5px;">
+                                        <a href="{{ route('crud.edit', $user->id) }}" class="btn btn-action btn-edit">Edit</a>
+                                        <form action="{{ route('crud.destroy', $user->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus user ini?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-action btn-delete">Hapus</button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -415,11 +449,16 @@
             </div>
         </section>
 
-        <!-- SECTION: HISTORY PENYEWA -->
         <section id="section-history" class="section-card hidden">
             <div class="table-header">
                 <h2 class="table-title">Riwayat Penyewaan</h2>
             </div>
+
+            @if(session('success'))
+                <div style="background: #14532d; color: #81c784; padding: 12px; margin-bottom: 20px; border: 1px solid rgba(129, 199, 132, 0.2); font-size: 0.9rem;">
+                    {{ session('success') }}
+                </div>
+            @endif
 
             <div class="table-responsive">
                 <table>
@@ -431,7 +470,7 @@
                             <th>Tanggal Sewa</th>
                             <th>Tanggal Pengembalian</th>
                             <th>Metode Pembayaran</th>
-                            <th>Status</th>
+                            <th>Status Sewa</th>
                             <th>Kontrak</th>
                         </tr>
                     </thead>
@@ -452,23 +491,56 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <a
-                                        href="{{ route('sewa.kontrak', $transaksi->id) }}"
-                                        target="_blank"
-                                        class="btn btn-action btn-kontrak"
-                                    >
-                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                            <polyline points="7 10 12 15 17 10"/>
-                                            <line x1="12" y1="15" x2="12" y2="3"/>
-                                        </svg>
-                                        Download Kontrak
-                                    </a>
+                                    @php
+                                        $kontrak = \App\Models\Kontrak::where('transaksi_id', $transaksi->id)->first();
+                                    @endphp
+
+                                    {{-- Jika belum ada data kontrak --}}
+                                    @if(!$kontrak)
+                                        <span class="badge badge-danger">Belum Dibuat</span>
+
+                                    {{-- Jika kontrak masih pending (Butuh Approval Admin) --}}
+                                    @elseif($kontrak->status == 'pending')
+                                        <button
+                                            type="button"
+                                            class="btn btn-action btn-gold"
+                                            onclick="openKontrakModal(
+                                                '{{ $transaksi->id }}',
+                                                '{{ $transaksi->kamera->nama_kamera }}',
+                                                '{{ $transaksi->tanggal_sewa }}',
+                                                '{{ $transaksi->tanggal_pengembalian }}',
+                                                '{{ $kontrak->id }}'
+                                            )"
+                                        >
+                                            Review & Approve
+                                        </button>
+
+                                    {{-- Jika kontrak diterima --}}
+                                    @elseif($kontrak->status == 'approved')
+                                        <div style="display: flex; gap: 5px; align-items: center;">
+                                            <span class="badge badge-success">Approved</span>
+                                            <a href="{{ route('kontrak.download', $kontrak->id) }}" class="btn btn-action btn-kontrak" target="_blank">
+                                                🖨️ Download
+                                            </a>
+                                            <button type="button" style="padding: 2px 5px; font-size: 0.7rem;" class="btn btn-outline" onclick="openKontrakModal('{{ $transaksi->id }}', '{{ $transaksi->kamera->nama_kamera }}', '{{ $transaksi->tanggal_sewa }}', '{{ $transaksi->tanggal_pengembalian }}', '{{ $kontrak->id }}')">
+                                                Ubah
+                                            </button>
+                                        </div>
+
+                                    {{-- Jika kontrak ditolak --}}
+                                    @elseif($kontrak->status == 'rejected')
+                                        <div style="display: flex; gap: 5px; align-items: center;">
+                                            <span class="badge badge-danger">Rejected</span>
+                                            <button type="button" style="padding: 2px 5px; font-size: 0.7rem;" class="btn btn-outline" onclick="openKontrakModal('{{ $transaksi->id }}', '{{ $transaksi->kamera->nama_kamera }}', '{{ $transaksi->tanggal_sewa }}', '{{ $transaksi->tanggal_pengembalian }}', '{{ $kontrak->id }}')">
+                                                Ubah
+                                            </button>
+                                        </div>
+                                    @endif
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" style="text-align:center;">Belum ada riwayat penyewaan</td>
+                                <td colspan="8" style="text-align:center;">Belum ada riwayat penyewaan</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -478,7 +550,50 @@
 
     </main>
 
-    <!-- JAVASCRIPT UNTUK SIMULASI PERPINDAHAN NAVBAR CRUD -->
+    <div id="kontrakModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Kelola Validasi Kontrak</h3>
+                <button type="button" class="btn-close-modal" onclick="closeKontrakModal()">&times;</button>
+            </div>
+            
+            <form id="formKontrakAdmin" method="POST">
+                @csrf
+                <input type="hidden" name="kontrak_id" id="modal_kontrak_id">
+                <input type="hidden" name="transaksi_id" id="kontrak_transaksi_id">
+
+                <div class="form-group">
+                    <label>Aset Kamera</label>
+                    <input type="text" id="kontrak_kamera" readonly disabled>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Mulai Sewa</label>
+                        <input type="text" id="kontrak_tanggal_sewa" readonly disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Selesai Sewa</label>
+                        <input type="text" id="kontrak_tanggal_pengembalian" readonly disabled>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="modal_status_select" style="color: var(--gold-lt);">Aksi Persetujuan Kontrak</label>
+                    <select id="modal_status_select" name="status" required>
+                        <option value="approved">Setujui & Terbitkan Kontrak (Approved)</option>
+                        <option value="rejected">Tolak Berkas Kontrak (Rejected)</option>
+                    </select>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeKontrakModal()">Batal</button>
+                    <button type="button" class="btn btn-gold" onclick="submitStatusKontrak()">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         function switchTab(target) {
             const secKamera  = document.getElementById('section-kamera');
@@ -515,6 +630,40 @@
                 subtitle.innerText = "Pantau seluruh riwayat transaksi dan status penyewaan kamera.";
             }
         }
+
+        // Fungsi Membuka Modal & Mengisi Data Awal
+        function openKontrakModal(transaksiId, kamera, tanggalSewa, tanggalPengembalian, kontrakId){
+            document.getElementById('kontrakModal').classList.add('open');
+            document.getElementById('kontrak_transaksi_id').value = transaksiId;
+            document.getElementById('kontrak_kamera').value = kamera;
+            document.getElementById('kontrak_tanggal_sewa').value = tanggalSewa;
+            document.getElementById('kontrak_tanggal_pengembalian').value = tanggalPengembalian;
+            document.getElementById('modal_kontrak_id').value = kontrakId;
+        }
+
+        function closeKontrakModal(){
+            document.getElementById('kontrakModal').classList.remove('open');
+        }
+
+        // Mengarahkan submit form ke URL / rute yang tepat secara dinamis
+        function submitStatusKontrak() {
+            const kontrakId = document.getElementById('modal_kontrak_id').value;
+            const form = document.getElementById('formKontrakAdmin');
+
+            if (!kontrakId) {
+                alert('ID Kontrak tidak ditemukan.');
+                return;
+            }
+
+            // Set action kosong agar form mengirim POST ke URL /admin/dashboard itu sendiri
+            form.action = ""; 
+            form.submit();
+        }
+
+        // Auto-buka tab history jika admin baru saja merubah status kontrak (opsional kenyamanan)
+        @if(session('success'))
+            switchTab('history');
+        @endif
     </script>
 </body>
 </html>

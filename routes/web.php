@@ -8,6 +8,7 @@ use App\Http\Controllers\User\UserController;
 use App\Http\Controllers\Admin\KameraController;
 use App\Http\Controllers\User\SewaController;
 use App\Http\Controllers\MoneyDetectionController;
+use App\Http\Controllers\KontrakController;
 
 /*
 |--------------------------------------------------------------------------
@@ -35,11 +36,27 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::post('/kontrak/store', [KontrakController::class, 'store'])
+    ->name('kontrak.store');
+
+    Route::get('/kontrak/{id}', [KontrakController::class, 'show'])
+        ->name('kontrak.show');
+
+    Route::post('/kontrak/{id}/approve', [KontrakController::class, 'approve'])
+        ->name('kontrak.approve');
+
+    Route::post('/kontrak/{id}/reject', [KontrakController::class, 'reject'])
+        ->name('kontrak.reject');
+
+    Route::get('/kontrak/{id}/download', [KontrakController::class, 'download'])
+        ->name('kontrak.download');
+    
 });
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
 
     Route::get('/admin/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
+    Route::post('/admin/dashboard', [AdminController::class, 'index']);
     Route::resource('/admin/crud', crudController::class);
     Route::resource('/admin/crud/kamera', KameraController::class);
 

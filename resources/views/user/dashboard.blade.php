@@ -464,9 +464,31 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <a href="{{ route('sewa.kontrak', $transaksi->id) }}" target="_blank" class="btn btn-outline" style="font-size:0.7rem;padding:0.4rem 0.8rem;">
-                                        Download
+                                @if(!$transaksi->kontrak)
+                                    <button
+                                        onclick="openContractModal(
+                                            '{{ $transaksi->id }}'
+                                        )"
+                                        class="btn btn-gold">
+                                        Generate Kontrak
+                                    </button>
+                                @elseif($transaksi->kontrak->status == 'pending')
+                                    <button class="btn btn-warning">
+                                        Menunggu Approval
+                                    </button>
+                                @elseif($transaksi->kontrak->status == 'approved')
+                                    <a href="{{ route(
+                                        'kontrak.download',
+                                        $transaksi->kontrak->id
+                                    ) }}"
+                                    class="btn btn-success">
+                                        Download Kontrak
                                     </a>
+                                @else
+                                    <button class="btn btn-danger">
+                                      Ditolak
+                                    </button>
+                                @endif
                                 </td>
                             </tr>
                         @empty
@@ -604,6 +626,76 @@
     </div>
     <!-- END MODAL -->
 
+    <div id="contractModal"
+     class="modal-overlay">
+
+        <div class="modal-box">
+
+            <button onclick="closeContractModal()"
+                    class="modal-close">
+
+                ×
+
+            </button>
+
+            <h2 class="modal-title">
+                Generate Kontrak
+            </h2>
+
+            <form id="contractForm">
+
+                @csrf
+
+                <input type="hidden"
+                    id="contractTransaksiId">
+
+                <div class="field">
+
+                    <label>Nama</label>
+
+                    <input type="text"
+                        id="contractNama"
+                        required>
+
+                </div>
+
+                <div class="field">
+
+                    <label>No HP</label>
+
+                    <input type="text"
+                        id="contractNoHp"
+                        required>
+
+                </div>
+
+                <div class="field">
+
+                    <label>Alamat</label>
+
+                    <textarea id="contractAlamat"
+                            style="width:100%;
+                                    background:#1a1a1a;
+                                    border:1px solid #2a2a2a;
+                                    color:white;
+                                    padding:10px;"
+                            required></textarea>
+
+                </div>
+
+                <button type="button"
+                        class="submit-btn"
+                        onclick="submitContract()">
+
+                    Submit Kontrak
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
     <script>
         /* ==================== NAV SWITCH ==================== */
         function switchMenu(target) {
@@ -899,6 +991,85 @@
                 alert('Terjadi kesalahan jaringan atau server.');
                 submitBtn.disabled  = false;
                 submitBtn.innerHTML = 'Ajukan Penyewaan';
+            }
+        }
+
+        function openContractModal(id)
+        {
+            document
+                .getElementById('contractModal')
+                .classList.add('open');
+
+            document
+                .getElementById('contractTransaksiId')
+                .value = id;
+        }
+
+        function closeContractModal()
+        {
+            document
+                .getElementById('contractModal')
+                .classList.remove('open');
+        }
+
+        async function submitContract()
+        {
+            const transaksiId =
+                document.getElementById(
+                    'contractTransaksiId'
+                ).value;
+
+            const nama =
+                document.getElementById(
+                    'contractNama'
+                ).value;
+
+            const noHp =
+                document.getElementById(
+                    'contractNoHp'
+                ).value;
+
+            const alamat =
+                document.getElementById(
+                    'contractAlamat'
+                ).value;
+
+            const response = await fetch("{{ route('kontrak.store') }}", {
+                    method: 'POST',
+
+                    headers: {
+
+                        'Content-Type':
+                            'application/json',
+
+                        'X-CSRF-TOKEN':
+                            document.querySelector(
+                                'meta[name="csrf-token"]'
+                            ).content
+                    },
+
+                    body: JSON.stringify({
+
+                        transaksi_id: transaksiId,
+
+                        nama: nama,
+
+                        no_hp: noHp,
+
+                        alamat: alamat
+                    })
+                }
+            );
+
+            const data = await response.json();
+
+            if(data.success)
+            {
+                alert(
+                    'Kontrak berhasil dikirim'
+                );
+
+                location.reload();
             }
         }
     </script>

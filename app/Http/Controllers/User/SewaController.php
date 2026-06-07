@@ -51,8 +51,8 @@ class SewaController extends Controller
 
         $request->validate([
             'kamera_id' => 'required|exists:kameras,id',
-            'tanggal_sewa' => 'required|date',
-            'tanggal_pengembalian' => 'required|date',
+            'tanggal_sewa' => 'required|date|after_or_equal:today',
+            'tanggal_pengembalian' => 'required|date|after_or_equal:tanggal_sewa',
             'metode_pembayaran' => 'required',
         ]);
 
